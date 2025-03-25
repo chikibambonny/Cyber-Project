@@ -8,6 +8,7 @@ from PyQt5.QtCore import QTimer
 
 from protocol import *
 from config import *
+from CClientBL import *
 
 
 class DrawingCanvas(QtWidgets.QFrame):
@@ -101,10 +102,12 @@ class DrawingCanvas(QtWidgets.QFrame):
         return filename
 
 
-class CDrawingGUI(QtWidgets.QWidget):
+class CDrawingGUI(CClientBL, QtWidgets.QWidget):
     def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Drawing")
+        # Initialize QWidget first (the graphical base)
+        QtWidgets.QWidget.__init__(self)
+        # Then initialize CClientBL
+        CClientBL.__init__(self)
 
         # Drawing attributes
         self.eraser_mode = False
