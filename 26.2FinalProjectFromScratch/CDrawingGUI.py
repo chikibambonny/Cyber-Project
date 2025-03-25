@@ -2,6 +2,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
 from PyQt5.QtCore import Qt, QPoint
 
+import os
+from datetime import datetime
+from PyQt5.QtCore import QTimer
+
 from protocol import *
 from config import *
 
@@ -17,6 +21,12 @@ class DrawingCanvas(QtWidgets.QFrame):
         self.canvas = QPixmap(self.width(), self.height())
         self.canvas.fill(Qt.white)
         self.setMouseTracking(True)
+
+        # for smart save
+        self.has_unsaved_changes = False
+        # Initialize blank canvas for comparison
+        self.blank_canvas = QPixmap(self.width(), self.height())
+        self.blank_canvas.fill(Qt.white)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -39,6 +49,8 @@ class DrawingCanvas(QtWidgets.QFrame):
             painter.drawLine(self.last_point, current_point)
             self.last_point = current_point
             self.update()
+            self.has_unsaved_changes = True
+            write_to_log(f'[DrawingGUI] - mouse moved has changes - {self.has_unsaved_changes}')
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -47,14 +59,46 @@ class DrawingCanvas(QtWidgets.QFrame):
     def clear_canvas(self):
         self.canvas.fill(Qt.white)
         self.update()
+        if not self.is_canvas_blank():  # Only mark changes if actually clearing
+            self.has_unsaved_changes = True
+            write_to_log(f'[DrawingGUI] - clear canvas has changes - {self.has_unsaved_changes}')
 
     def resizeEvent(self, event):
-        new_pixmap = QPixmap(event.size())
+        # Create new pixmaps with the new size
+        new_pixmap = QPixmap(event.size())  # For the drawing canvas
+        new_blank = QPixmap(event.size())  # For the blank reference
+
+        # Initialize them both as white
         new_pixmap.fill(Qt.white)
+        new_blank.fill(Qt.white)
+
+        # Copy existing drawing content (if any)
         painter = QPainter(new_pixmap)
         painter.drawPixmap(0, 0, self.canvas)
-        self.canvas = new_pixmap
-        super().resizeEvent(event)
+        painter.end()
+
+        # Update our references
+        self.canvas = new_pixmap  # Our main drawing surface
+        self.blank_canvas = new_blank  # Our reference blank canvas
+
+    # smart save functions
+    def is_canvas_blank(self):
+        """Compare current canvas with blank canvas"""
+        return self.canvas.toImage() == self.blank_canvas.toImage()
+
+    def save_drawing(self, folder="saved_drawings"):
+        """Save only if there are changes"""
+        if not self.has_unsaved_changes:
+            return None
+
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = os.path.join(folder, f"drawing_{timestamp}.png")
+        self.canvas.save(filename, "PNG")
+        self.has_unsaved_changes = False
+        return filename
 
 
 class CDrawingGUI(QtWidgets.QWidget):
@@ -80,6 +124,17 @@ class CDrawingGUI(QtWidgets.QWidget):
         self.ClearBtn = None
 
         self.setupUi(self)
+        self.setup_autosave()
+
+    def setup_autosave(self):
+        self.autosave_timer = QTimer()
+        self.autosave_timer.timeout.connect(self.autosave_drawing)
+        write_to_log(f'[DrawingGUI] - saving - timeout set')
+        self.autosave_timer.start(10 * 1000)  # 5 minutes in milliseconds 5 * 60 * 1000
+
+    def autosave_drawing(self):
+        filename = self.frameCanvas.save_drawing()
+        write_to_log(f"Auto-saved drawing to: {filename}")  # Optional logging
 
     def setupUi(self, Form):
         Form.setObjectName("Drawing")
