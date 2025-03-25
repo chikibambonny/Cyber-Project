@@ -1,16 +1,69 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
+from PyQt5.QtCore import Qt, QPoint
 
 from protocol import *
 from config import *
 
 
-class CDrawingGUI(QtWidgets.QWidget):
+class DrawingCanvas(QtWidgets.QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.drawing = False
+        self.last_point = QPoint()
+        self.pen_color = QColor(BLACK)
+        self.pen_width = 3
+        self.eraser_mode = False
+        self.canvas = QPixmap(self.width(), self.height())
+        self.canvas.fill(Qt.white)
+        self.setMouseTracking(True)
 
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(0, 0, self.canvas)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drawing = True
+            self.last_point = event.pos()
+
+    def mouseMoveEvent(self, event):
+        if (event.buttons() & Qt.LeftButton) and self.drawing:
+            painter = QPainter(self.canvas)
+            if self.eraser_mode:
+                painter.setPen(QPen(Qt.white, self.pen_width * 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            else:
+                painter.setPen(QPen(self.pen_color, self.pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+
+            current_point = event.pos()
+            painter.drawLine(self.last_point, current_point)
+            self.last_point = current_point
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drawing = False
+
+    def clear_canvas(self):
+        self.canvas.fill(Qt.white)
+        self.update()
+
+    def resizeEvent(self, event):
+        new_pixmap = QPixmap(event.size())
+        new_pixmap.fill(Qt.white)
+        painter = QPainter(new_pixmap)
+        painter.drawPixmap(0, 0, self.canvas)
+        self.canvas = new_pixmap
+        super().resizeEvent(event)
+
+
+class CDrawingGUI(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Drawing")
-        self.frameCanvas = None
+
+        # Drawing attributes
+        self.eraser_mode = False
 
         # palette
         self.RedBtn = None
@@ -29,25 +82,24 @@ class CDrawingGUI(QtWidgets.QWidget):
         self.setupUi(self)
 
     def setupUi(self, Form):
-        # Set up the main window properties
         Form.setObjectName("Drawing")
-        Form.resize(657, 388)  # Set the window size
+        Form.resize(657, 388)
 
-        # Create a QFrame for the drawing canvas area
-        self.frameCanvas = QtWidgets.QFrame(Form)
-        self.frameCanvas.setGeometry(QtCore.QRect(30, 70, 481, 281))  # Position and size of the canvas
-        self.frameCanvas.setFrameShape(QtWidgets.QFrame.StyledPanel)  # Set frame style
-        self.frameCanvas.setFrameShadow(QtWidgets.QFrame.Plain)  # Set shadow style
-        self.frameCanvas.setObjectName("frameCanvas")  # Name the frame
+        # Create the drawing canvas
+        self.frameCanvas = DrawingCanvas(Form)
+        self.frameCanvas.setGeometry(QtCore.QRect(30, 70, 481, 281))
+        self.frameCanvas.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frameCanvas.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.frameCanvas.setObjectName("frameCanvas")
 
         # Create a QWidget to hold the color buttons and other controls
         self.widget = QtWidgets.QWidget(Form)
-        self.widget.setGeometry(QtCore.QRect(540, 90, 91, 174))  # Position and size of the widget
-        self.widget.setObjectName("widget")  # Name the widget
+        self.widget.setGeometry(QtCore.QRect(540, 90, 91, 174))
+        self.widget.setObjectName("widget")
 
         # Create a vertical layout to organize widgets inside the widget
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)  # Remove margins
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
 
         # Create a grid layout to arrange color buttons in a grid
@@ -58,11 +110,10 @@ class CDrawingGUI(QtWidgets.QWidget):
         for i, color in enumerate(PALETTE_COLORS):
             btn = QtWidgets.QPushButton()
             btn.setStyleSheet(f"background-color: {color}; border: 1px solid black;")
-            btn.setFixedSize(30, 20)  # Square buttons
-            btn.clicked.connect(lambda checked, col=color: self.set_pen_color(QColor(col)))
-            self.gridLayout.addWidget(btn, i // 2, i % 2)  # Arrange in 4 columns
+            btn.setFixedSize(30, 20)
+            btn.clicked.connect(lambda checked, col=color: self.set_pen_color(col))
+            self.gridLayout.addWidget(btn, i // 2, i % 2)
 
-        # Add the grid layout to the vertical layout
         self.verticalLayout_2.addLayout(self.gridLayout)
 
         # Create another vertical layout for buttons like Eraser and Clear Canvas
@@ -72,20 +123,18 @@ class CDrawingGUI(QtWidgets.QWidget):
         # Create an Eraser button and add it to the layout
         self.EraserBtn = QtWidgets.QPushButton(self.widget)
         self.EraserBtn.setObjectName("EraserBtn")
+        self.EraserBtn.clicked.connect(self.toggle_eraser)
         self.verticalLayout.addWidget(self.EraserBtn)
 
         # Create a Clear Canvas button and add it to the layout
         self.ClearBtn = QtWidgets.QPushButton(self.widget)
         self.ClearBtn.setObjectName("pushButton_10")
+        self.ClearBtn.clicked.connect(self.clear_canvas)
         self.verticalLayout.addWidget(self.ClearBtn)
 
-        # Add the vertical layout (Eraser + Clear) to the main vertical layout
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
-        # Call retranslate function to set up the text for buttons
         self.retranslateUi(Form)
-
-        # Connect the slots by object names (auto connection for signals/slots)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
         # set style
@@ -95,19 +144,56 @@ class CDrawingGUI(QtWidgets.QWidget):
         set_designs(buttons, fields, labels)
         Form.setStyleSheet(f"background-color: {LIGHTBEIGE_BG};")
 
-
     def retranslateUi(self, Form):
-        # Set window title and button text
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Form"))
+        Form.setWindowTitle(_translate("Form", "Draw"))
         self.EraserBtn.setText(_translate("Form", "Eraser"))
         self.ClearBtn.setText(_translate("Form", "Clear canvas"))
+
+    def set_pen_color(self, color):
+        """Set the pen color from an 'rgb(r,g,b)' string"""
+        # Extract numbers from "rgb(192, 57, 53)" format
+        if color.startswith("rgb(") and color.endswith(")"):
+
+            rgb_values = color[4:-1].split(',')  # Gets ["192", " 57", " 53"]
+            write_to_log(f'[DrawingGUI] - set_pen_color - rgb values{rgb_values}')
+            r = int(rgb_values[0])  # Convert to integers
+            g = int(rgb_values[1])
+            b = int(rgb_values[2])
+            self.frameCanvas.pen_color = QColor(r, g, b)
+        else:
+            # Fallback for other formats (hex, color names, etc)
+            self.frameCanvas.pen_color = QColor(color)
+
+        self.frameCanvas.eraser_mode = False
+        self.EraserBtn.setStyleSheet("")  # Reset eraser button style
+
+    def toggle_eraser(self):
+        self.frameCanvas.eraser_mode = not self.frameCanvas.eraser_mode
+        if self.frameCanvas.eraser_mode:
+            self.EraserBtn.setStyleSheet(f"""background-color: {DIS_BUTTONS};  
+        color: {TEXT_BUTTONS};
+        border: 2px solid {DIS_BORDER_BUTTONS};  /* Softer border for disabled buttons */
+        border-bottom: 4px solid {DIS_SHADOW_BUTTONS};  /* Softer shadow for disabled buttons */
+        border-radius: 8px;
+            """)
+        else:
+            self.EraserBtn.setStyleSheet(f"""
+background-color: {BUTTONS};  
+        color: {TEXT_BUTTONS};
+        border: 2px solid {BORDER_BUTTONS};  /* Main border */
+        border-bottom: 4px solid {SHADOW_BUTTONS};  /* Simulated shadow at the bottom */
+        border-radius: 8px;
+""")
+
+    def clear_canvas(self):
+        self.frameCanvas.clear_canvas()
 
 
 if __name__ == "__main__":
     import sys
 
-    app = QtWidgets.QApplication(sys.argv)  # Create the application instance
-    window = CDrawingGUI()  # Create an instance of your window
-    window.show()  # Show the window
-    sys.exit(app.exec_())  # Start the application's event loop
+    app = QtWidgets.QApplication(sys.argv)
+    window = CDrawingGUI()
+    window.show()
+    sys.exit(app.exec_())

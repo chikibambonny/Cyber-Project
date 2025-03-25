@@ -47,6 +47,17 @@ SHADOW_BUTTONS = "rgb(230, 150, 60)"  # Slightly darker shade for shadow effect
 DIS_SHADOW_BUTTONS = "rgb(220, 180, 120)"  # Softer shadow for disabled buttons
 
 # drawing window, palette https://coolors.co/c03935-e16a30-f5ad33-387b5c-3877aa-7c6d8e-d691ad-1e0c00-fff4e2
+'''
+RED = "C03935"
+ORANGE = "E16A30"
+YELLOW = "F5AD33"
+GREEN = "387B5C"
+BLUE = "3877AA"
+PURPLE = "7C6D8E"
+PINK = "D691AD"
+BLACK = "2D221E"
+
+'''
 RED = "rgb(192, 57, 53)"
 ORANGE = "rgb(225, 106, 48)"
 YELLOW = "rgb(245, 173, 51)"
@@ -56,6 +67,7 @@ PURPLE = "rgb(124, 109, 142)"
 PINK = "rgb(214, 145, 173)"
 BLACK = "rgb(30, 12, 0)"
 WHITE = "rgb(255, 244, 226)"
+
 
 PALETTE_COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK, BLACK]
 
