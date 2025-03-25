@@ -224,7 +224,13 @@ class CDrawingGUI(CClientBL, QtWidgets.QWidget):
             self.frameCanvas.pen_color = QColor(color)
 
         self.frameCanvas.eraser_mode = False
-        self.EraserBtn.setStyleSheet("")  # Reset eraser button style
+        self.EraserBtn.setStyleSheet(f"""
+background-color: {BUTTONS};  
+        color: {TEXT_BUTTONS};
+        border: 2px solid {BORDER_BUTTONS};  /* Main border */
+        border-bottom: 4px solid {SHADOW_BUTTONS};  /* Simulated shadow at the bottom */
+        border-radius: 8px;
+""")
 
     def toggle_eraser(self):
         self.frameCanvas.eraser_mode = not self.frameCanvas.eraser_mode

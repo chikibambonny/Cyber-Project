@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
+from CViewGUI import CViewGUI
 from protocol import *
 from config import *
 
@@ -174,7 +175,7 @@ class CClientGUI(CClientBL, object):
         self.LoginBtn.setEnabled(False)
         self.PlayBtn.setEnabled(False)
         # self.DrawBtn.setEnabled(False)
-        self.WatchBtn.setEnabled(False)
+        # self.WatchBtn.setEnabled(False)
         self.LeaveBtn.setEnabled(False)
         self.SendBtn.setEnabled(True)
 
@@ -228,7 +229,8 @@ class CClientGUI(CClientBL, object):
 
 
     def on_click_watch(self):
-        pass
+        self.view_wnd = CViewGUI()
+        self.view_wnd.show()
 
     def on_click_leave(self):
         pass
