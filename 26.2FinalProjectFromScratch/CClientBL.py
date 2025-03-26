@@ -1,16 +1,42 @@
 import socket
 from threading import Thread, Lock
+from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5 import QtCore
 from config import *
 from protocol import *
 
 
-class CClientBL:
+class CClientBL(QObject):
+    message_received = pyqtSignal(str)  # Define a signal for received messages
     def __init__(self):
+        super().__init__()  # Ensure QObject is initialized
         # self._host = SERVER_HOST
         # self._port = PORT
         self._client_socket = None
         self.login = None
         self.lock = Lock()  # Add a lock for thread safety
+
+    def receive_target(self):
+        while self._client_socket:
+            try:
+                msg = self._client_socket.recv(1024).decode()
+                if not msg:
+                    write_to_log("[ClientBL] - Server disconnected.")
+                    break
+
+                write_to_log(f"[ClientBL] - Server response: {msg}")
+
+                # Use invokeMethod to safely update UI from another thread
+                QtCore.QMetaObject.invokeMethod(
+                    self.ReceiveField, "appendPlainText",
+                    QtCore.Qt.QueuedConnection,
+                    QtCore.Q_ARG(str, "TEST")
+                )
+                write_to_log("[CClientBL] - QMetaOBject - message added to GUI")
+
+            except Exception as e:
+                print(f"Error receiving message: {e}")
+                break
 
     def connect(self, host, port) -> socket:
         try:

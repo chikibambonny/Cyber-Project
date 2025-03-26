@@ -1,7 +1,7 @@
 # =========== NETWORK ===========
 
 SERVER_HOST: str = "127.0.0.1"
-PORT: int = 1112
+PORT: int = 1113
 BUFFER_SIZE: int = 1024
 HEADER: str = "04d"
 FORMAT: str = 'utf-8'
@@ -31,7 +31,10 @@ GUESS_ROLE = False
 
 # =========== UI ===========
 CLIENT_UI = './PYQTDesignerStuff/ClientUI.ui'
+CAST_IMG_PATH = "saved_drawings/drawing_20250325_221158.png"
 
+# =========== WORDS ===========
+WORDS_BANK = "words.txt"
 
 # =========== STYLES ===========
 # palette swatches https://coolors.co/f5bd4c-fbf6e3-543e12-ec9146-f4ccc2-7d8458-ffffff-b84169-be5277-c46283

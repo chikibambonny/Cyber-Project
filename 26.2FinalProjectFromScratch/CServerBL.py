@@ -4,6 +4,7 @@ from queue import SimpleQueue
 from threading import Thread, current_thread
 from config import *
 from protocol import *
+import random
 
 
 # Message object to encapsulate action and data
@@ -33,6 +34,8 @@ class Server:
         self.users = ('a', 'b')  # List of allowed users
         self.super_queue = SimpleQueue()  # Main queue for messages
         self.sock = None
+        self.current_word :str = None
+        self.guessed :str = None  # login of the one who guessed
 
     # Handles initial client login
     def gateman(self, connection, address):
@@ -77,6 +80,37 @@ class Server:
             if not (connection is client or connection.login == 'root'):
                 connection.qout.put(Message(TEXT_ACTION, msg))  # Add message to client's outgoing queue
 
+    def get_random_word(self):
+        # Open the file and read the words.txt into a list
+        with open(WORDS_BANK, "r") as file:
+            words = file.read().splitlines()
+        # Return a random word from the list
+        return random.choice(words)
+
+    def assign_roles(self) -> str:
+        if not self.connected:
+            msg = 'no clients to assign roles to'
+        else:
+            for key in self.connected:
+                self.connected[key][1] = GUESS_ROLE
+            if self.guessed is None:
+                artist = random.choice(self.connected.keys())
+            else:
+                artist = self.guessed
+            self.connected[self.artist][1] = DRAW_ROLE
+            return artist
+
+    def send_roles(self):
+        artist_login = self.assign_roles()
+        for connection, role in self.connected.values():
+            if not (connection.login == 'root'):
+                connection.qout.put(Message(ROLE_ACTION, role))
+        self.broadcast(f'[Server] {artist_login} is drawing now')
+        self.current_word = self.get_random_word()
+        self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.current_word))
+
+
+
     # Main server function
     def run_server(self):
         self.connected['root'] = (ClientConnection(None, None, None, 'root'), None)  # Root user placeholder
@@ -110,7 +144,15 @@ class Server:
                     file.close()
                     connection.shutdown(socket.SHUT_WR)
                     connection.close()
-            elif msg.action == LOGOUT_ACTION:
+            elif msg.action == PLAY_ACTION:
+                # Send roles and the word
+                self.send_roles()
+            elif msg.action == TEXT_ACTION:
+                self.broadcast(*msg.data)  # Broadcast message
+                if self.current_word:
+                    # here i should check the received text for being the correct guess
+
+            elif msg.action == EXIT_ACTION:
                 self.broadcast(self.connected['root'][0], f'{msg.data.login} left')  # Notify clients of logout
                 msg.data.qout.put(Message('exit'))  # Send exit message
                 msg.data.ci.join()
@@ -122,8 +164,6 @@ class Server:
                 except:
                     pass
                 del self.connected[msg.data.login]  # Remove client from connected list
-            elif msg.action == TEXT_ACTION:
-                self.broadcast(*msg.data)  # Broadcast message
             else:
                 print('Unknown action')  # Debug unknown actions
 

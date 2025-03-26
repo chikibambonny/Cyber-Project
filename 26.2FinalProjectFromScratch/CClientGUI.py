@@ -1,6 +1,5 @@
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication
 import sys
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
@@ -12,7 +11,9 @@ from config import *
 class CClientGUI(CClientBL, object):
     def __init__(self):
         super().__init__()
-
+        write_to_log("[CClientGUI] - init - connecting signal")
+        self.message_received.connect(self.update_receive_field)  # Connect signal to slot
+        write_to_log("[CClientGUI] - init - signal connected")
         self._client_socket = None
 
         # fields
@@ -34,6 +35,13 @@ class CClientGUI(CClientBL, object):
         self.PortLabel = None
         self.ReceiveLabel = None
         self.SendLabel = None
+
+        self.message_received.connect(self.update_receive_field)  # Connect signal to slot
+
+    def update_receive_field(self, msg):
+        write_to_log(f'[CClientGUI] - update receive field -  w msg: {msg}')
+        QApplication.processEvents()  # Ensure UI updates in real time
+        self.ReceiveField.appendPlainText(msg)  # Append received message
 
     def setupUi(self, MainWindow):
         """Sets up the UI for the main window."""
@@ -202,10 +210,13 @@ class CClientGUI(CClientBL, object):
         self._client_socket = self.connect(ip, port)  # Ensure your connect function takes arguments
 
         if self._client_socket:
-            self.ReceiveField.appendPlainText("Connected successfully!")  # Update UI
+            # self.ReceiveField.appendPlainText("Connected successfully!")  # Update UI
             self.ConnectBtn.setEnabled(False)
             self.LoginBtn.setEnabled(True)
             self.LeaveBtn.setEnabled(True)
+            # Start the receiving thread
+            recv_thread = Thread(target=self.receive_target, daemon=True)
+            recv_thread.start()
         else:
             self.ReceiveField.appendPlainText("Failed to connect.")
 
