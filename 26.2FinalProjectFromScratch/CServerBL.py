@@ -119,6 +119,8 @@ class Server:
         while True:
             msg = self.super_queue.get()  # Get message from queue
             write_to_log(f'[Server] - current message: {msg.data} ')
+            # connection, address, file, _ = msg.data
+            # write_to_log(f'[CServerBL] - msg.data parse - connection: {connection}, adress: {address}, file: {file}')
             if msg.action == CONNECTION_ACTION:
                 g = Thread(target=self.gateman, args=(*msg.data,))  # Start login thread
                 g.start()
@@ -150,7 +152,12 @@ class Server:
             elif msg.action == TEXT_ACTION:
                 self.broadcast(*msg.data)  # Broadcast message
                 if self.current_word:
-                    # here i should check the received text for being the correct guess
+                    connection, address, file, _ = msg.data
+                    write_to_log(f'[CServerBL] - msg.data parse - connection: {connection}, adress: {address}, file: {file}')
+                    if file == self.current_word:
+                        self.guessed = connection.login
+                        self.broadcast(f'{self.guessed} guessed the word {self.current_word}')
+                        self.send_roles()
 
             elif msg.action == EXIT_ACTION:
                 self.broadcast(self.connected['root'][0], f'{msg.data.login} left')  # Notify clients of logout

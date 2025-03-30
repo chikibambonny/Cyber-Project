@@ -17,9 +17,11 @@ class CClientBL(QObject):
         self.lock = Lock()  # Add a lock for thread safety
 
     def receive_target(self):
+        write_to_log(f'[Client BL] - receive target - called')
         while self._client_socket:
             try:
                 msg = self._client_socket.recv(1024).decode()
+                write_to_log(f'[Client BL] - receive target - received: {msg}')
                 if not msg:
                     write_to_log("[ClientBL] - Server disconnected.")
                     break

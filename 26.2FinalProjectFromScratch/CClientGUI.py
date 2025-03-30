@@ -36,7 +36,11 @@ class CClientGUI(CClientBL, object):
         self.ReceiveLabel = None
         self.SendLabel = None
 
+        self.drawing_wnd = None
+        self.view_wnd = None
+
         self.message_received.connect(self.update_receive_field)  # Connect signal to slot
+        write_to_log('[CClientGUI] - init - slot connected')
 
     def update_receive_field(self, msg):
         write_to_log(f'[CClientGUI] - update receive field -  w msg: {msg}')
@@ -215,13 +219,16 @@ class CClientGUI(CClientBL, object):
             self.LoginBtn.setEnabled(True)
             self.LeaveBtn.setEnabled(True)
             # Start the receiving thread
+            write_to_log("[ClientGUI] - thread is gonna start")
             recv_thread = Thread(target=self.receive_target, daemon=True)
             recv_thread.start()
+            write_to_log("[ClientGUI] - thread started")
         else:
             self.ReceiveField.appendPlainText("Failed to connect.")
 
     def on_click_send(self):
         text = self.SendField.text()
+        self.SendField.clear()
         write_to_log(f'[ClientGUI] message to be sent: {text}')
         self.send_message(text)
 
@@ -235,12 +242,16 @@ class CClientGUI(CClientBL, object):
         pass
 
     def on_click_draw(self):
+        write_to_log('[CClientGUI] - on_click_draw - clicked')
         self.drawing_wnd = CDrawingGUI()
+        write_to_log('[CClientGUI] - on_click_draw - created')
         self.drawing_wnd.show()
 
 
     def on_click_watch(self):
+        write_to_log('[CClientGUI] - on_click_watch - clicked')
         self.view_wnd = CViewGUI()
+        write_to_log('[CClientGUI] - on_click_watch - created')
         self.view_wnd.show()
 
     def on_click_leave(self):
