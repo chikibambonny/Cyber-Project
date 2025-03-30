@@ -37,13 +37,13 @@ class CClientBL:
             send_thread = Thread(target=self.send_target)
             recv_thread.start()
             send_thread.start()
-            write_to_log("[CClientBL] - threads started")
+            write_to_log("[CClientBL] - run - threads started")
 
             # Wait for the sending thread to stop (happens when the input is a disconnect message)
             # send_thread.join()
             # self._client_socket.close()
         else:
-            print("Failed to connect to the server. Exiting.")
+            write_to_log("[CClientBL] - run - no client socket")
 
     def send_message(self, message):
         write_to_log(f'[ClientBL] - message received for sending: {message}')

@@ -230,6 +230,7 @@ class CClientGUI(CClientBL, object):
         text = self.SendField.text()
         write_to_log(f'[ClientGUI] message to be sent: {text}')
         self.send_message(text)
+        self.SendField.clear()
 
     def on_click_login(self):
         # now you cant login but can play and send messages
@@ -250,6 +251,7 @@ class CClientGUI(CClientBL, object):
 
     def on_click_leave(self):
         self.send_message(EXIT_ACTION)
+        self.ConnectBtn.setEnabled(True)
 
     def retranslateUi(self, MainWindow):
         """Handles the translation of UI elements."""
