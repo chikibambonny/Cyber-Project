@@ -11,18 +11,13 @@ from CClientBL import *
 
 class CViewGUI(CClientBL, QWidget):
     def __init__(self):
-        write_to_log('[CViewGUI] - init - started')
         # Initialize QWidget first (the graphical base)
         QWidget.__init__(self)
-        write_to_log('[CViewGUI] - init - Qwidget')
         # Then initialize CClientBL
         CClientBL.__init__(self)
-        write_to_log('[CViewGUI] - init - CClientBL')
 
         self.setWindowTitle("View")
-        write_to_log('[CViewGUI] - init - window title set')
         self.setGeometry(100, 100, 601, 301)  # Window size
-        write_to_log('[CViewGUI] - init - window geometry set')
         self.setStyleSheet(f'background-color: {LIGHTBEIGE_BG};')
 
         # Create main layout with margins (left, top, right, bottom)
@@ -55,6 +50,7 @@ class CViewGUI(CClientBL, QWidget):
             self.image_label.setPixmap(scaled_pixmap)
         else:
             print("Error loading translated image")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

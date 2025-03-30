@@ -9,6 +9,9 @@ DISCONNECT_MSG: str = "EXIT"
 WELCOME_MSG: str = "Welcome"
 MAX_CONNECTIONS: int = 5  # maximal number of players
 
+ACT_DELIMITER = ">"
+ARG_DELIMITER = "<"
+
 # =========== ACTIONS ===========
 # general
 EXIT_ACTION = "EXIT"  # Command for exiting the game
@@ -23,6 +26,10 @@ ROLE_ACTION = "ROLE"  # Command for assigning roles
 WORD_ACTON = "WORD"  # Command for sending the drawing word
 GUESS_ACTION = "GUESS"  # Command for submitting a guess
 PLAY_ACTION = "PLAY"  # Command for stopping accepting connections and starting a new game
+
+ACTIONS = [EXIT_ACTION, WELCOME_ACTION, CONNECTION_ACTION, AUTHENTICATION_ACTION, TEXT_ACTION, LOGOUT_ACTION,
+           ROLE_ACTION, WORD_ACTON, GUESS_ACTION, PLAY_ACTION
+           ]
 
 # roles
 DRAW_ROLE = True
@@ -71,8 +78,8 @@ PINK = "rgb(214, 145, 173)"
 BLACK = "rgb(30, 12, 0)"
 WHITE = "rgb(255, 244, 226)"
 
-
 PALETTE_COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK, BLACK]
+
 
 def set_designs(buttons: list, fields: list, labels: list):
     button_style = f"""

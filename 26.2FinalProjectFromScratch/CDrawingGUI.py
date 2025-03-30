@@ -104,13 +104,10 @@ class DrawingCanvas(QtWidgets.QFrame):
 
 class CDrawingGUI(CClientBL, QtWidgets.QWidget):
     def __init__(self):
-        write_to_log('[CDrawingGUI] - init - started')
         # Initialize QWidget first (the graphical base)
         QtWidgets.QWidget.__init__(self)
-        write_to_log('[CDrawingGUI] - init - widgets')
         # Then initialize CClientBL
         CClientBL.__init__(self)
-        write_to_log('[CDrawingGUI] - init - CClientBL')
 
         # Drawing attributes
         self.eraser_mode = False
@@ -130,7 +127,6 @@ class CDrawingGUI(CClientBL, QtWidgets.QWidget):
         self.ClearBtn = None
 
         self.setupUi(self)
-        write_to_log('[CDrawingGUI] - init - UI set up')
         self.setup_autosave()
 
     def setup_autosave(self):
@@ -144,12 +140,8 @@ class CDrawingGUI(CClientBL, QtWidgets.QWidget):
         write_to_log(f"Auto-saved drawing to: {filename}")  # Optional logging
 
     def setupUi(self, Form):
-        write_to_log('[CDrawingGUI] - SetUpUI - started')
         Form.setObjectName("Drawing")
-        write_to_log('[CDrawingGUI] - SetUpUI - object name set')
         Form.resize(657, 388)
-        write_to_log('[CDrawingGUI] - SetUpUI - resize & form created')
-
 
         # Create the drawing canvas
         self.frameCanvas = DrawingCanvas(Form)

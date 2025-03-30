@@ -1,5 +1,6 @@
+
+
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication
 import sys
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
@@ -11,10 +12,9 @@ from config import *
 class CClientGUI(CClientBL, object):
     def __init__(self):
         super().__init__()
-        write_to_log("[CClientGUI] - init - connecting signal")
-        self.message_received.connect(self.update_receive_field)  # Connect signal to slot
-        write_to_log("[CClientGUI] - init - signal connected")
+
         self._client_socket = None
+        self.update_field_thread = None
 
         # fields
         self.IPField = None
@@ -35,17 +35,6 @@ class CClientGUI(CClientBL, object):
         self.PortLabel = None
         self.ReceiveLabel = None
         self.SendLabel = None
-
-        self.drawing_wnd = None
-        self.view_wnd = None
-
-        self.message_received.connect(self.update_receive_field)  # Connect signal to slot
-        write_to_log('[CClientGUI] - init - slot connected')
-
-    def update_receive_field(self, msg):
-        write_to_log(f'[CClientGUI] - update receive field -  w msg: {msg}')
-        QApplication.processEvents()  # Ensure UI updates in real time
-        self.ReceiveField.appendPlainText(msg)  # Append received message
 
     def setupUi(self, MainWindow):
         """Sets up the UI for the main window."""
@@ -207,28 +196,38 @@ class CClientGUI(CClientBL, object):
         self.SendBtn.clicked.connect(self.on_click_send)
 
     # target functions for the buttons
+
+    def update_field_target(self, text_queue, field):
+        while True:
+            text = text_queue.get()  # Get message from queue
+            if text is None:
+                return
+            field.appendPlainText(text)
+
     def on_click_connect(self):
         ip = self.IPField.text()
         port = int(self.PortField.text())
 
         self._client_socket = self.connect(ip, port)  # Ensure your connect function takes arguments
 
+        # if connected
         if self._client_socket:
-            # self.ReceiveField.appendPlainText("Connected successfully!")  # Update UI
             self.ConnectBtn.setEnabled(False)
             self.LoginBtn.setEnabled(True)
             self.LeaveBtn.setEnabled(True)
-            # Start the receiving thread
-            write_to_log("[ClientGUI] - thread is gonna start")
-            recv_thread = Thread(target=self.receive_target, daemon=True)
-            recv_thread.start()
-            write_to_log("[ClientGUI] - thread started")
+            #temporarily
+            self.PlayBtn.setEnabled(True)
+
+            self.run()  # run client bl
+            # receive field updating thread
+            self.update_field_thread = Thread(target=self.update_field_target, args=(self.text_queue, self.ReceiveField))
+            self.update_field_thread.start()
+
         else:
             self.ReceiveField.appendPlainText("Failed to connect.")
 
     def on_click_send(self):
         text = self.SendField.text()
-        self.SendField.clear()
         write_to_log(f'[ClientGUI] message to be sent: {text}')
         self.send_message(text)
 
@@ -239,23 +238,18 @@ class CClientGUI(CClientBL, object):
         # self.SendBtn.setEnabled(True)
 
     def on_click_play(self):
-        pass
+        self.send_message(PLAY_ACTION)
 
     def on_click_draw(self):
-        write_to_log('[CClientGUI] - on_click_draw - clicked')
         self.drawing_wnd = CDrawingGUI()
-        write_to_log('[CClientGUI] - on_click_draw - created')
         self.drawing_wnd.show()
 
-
     def on_click_watch(self):
-        write_to_log('[CClientGUI] - on_click_watch - clicked')
         self.view_wnd = CViewGUI()
-        write_to_log('[CClientGUI] - on_click_watch - created')
         self.view_wnd.show()
 
     def on_click_leave(self):
-        pass
+        self.send_message(EXIT_ACTION)
 
     def retranslateUi(self, MainWindow):
         """Handles the translation of UI elements."""

@@ -34,8 +34,8 @@ class Server:
         self.users = ('a', 'b')  # List of allowed users
         self.super_queue = SimpleQueue()  # Main queue for messages
         self.sock = None
-        self.current_word :str = None
-        self.guessed :str = None  # login of the one who guessed
+        self.current_word: str = None
+        self.guessed: str = None  # login of the one who guessed
 
     # Handles initial client login
     def gateman(self, connection, address):
@@ -108,7 +108,6 @@ class Server:
         self.broadcast(f'[Server] {artist_login} is drawing now')
         self.current_word = self.get_random_word()
         self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.current_word))
-
 
 
     # Main server function
