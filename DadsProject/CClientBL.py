@@ -1,8 +1,9 @@
 import json
 
-from CProtocol26 import *
-from CProtocol27 import *
+# from CProtocol26 import *
 from CProtocol import *
+# from CProtocol27 import *
+import CProtocol
 
 class CClientBL:
 
@@ -35,13 +36,7 @@ class CClientBL:
     def send_data(self, protocol, cmd: str, add: str = "", ) -> bool:
         try:
             write_to_log("[CClientBL] cmd - " + cmd + ", add - " + add)
-            if protocol != "":
-                if add != "":
-                    cmd = protocol.create_request_msg(cmd, add)
-                else:
-                    cmd = protocol.create_request_msg(cmd)
-            else:
-                cmd = CProtocol26().create_request_msg(cmd)
+            cmd = protocol.create_request_msg(cmd)
 
             message = cmd.encode(FORMAT)
             self._client_socket.send(message)
@@ -53,7 +48,7 @@ class CClientBL:
 
     def receive_data(self) -> str:
         try:
-            (bres, msg) = receive_msg(self._client_socket)
+            (bres, msg) = get_msg(self._client_socket)
             if bres:
                 # message = msg.decode(FORMAT)
                 write_to_log(f"[CLIENT_BL] received {self._client_socket.getsockname()} {msg} ")

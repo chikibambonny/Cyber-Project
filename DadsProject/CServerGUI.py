@@ -5,12 +5,13 @@ from tkinter import *
 from tkinter import ttk
 from cryptography.fernet import Fernet
 from CServerBL import *
-from CProtocol26 import *
-from CProtocol import *
-from CProtocol27 import *
+# from CProtocol26 import *
+# from CProtocol import *
+# from CProtocol27 import *
+import CProtocol
 import sqlite3
 
-protocol = CProtocol26()
+protocol = CProtocol
 
 BTN_IMAGE = "./Images/GUI - button.png"
 BG_IMAGE = "./Images/GUI - BG Srv.png"
@@ -23,6 +24,7 @@ class CServerGUI(CServerBL):
     def __init__(self, host, port):
         super().__init__(host, port)
 
+        self.tree = None
         self._client_handlers_length = len(self._client_handlers)
         # Attributes
         self._server_thread = None
@@ -69,7 +71,7 @@ class CServerGUI(CServerBL):
         self._canvas.pack(fill='both', expand=True)
         self._canvas.create_image(0, 0, anchor="nw", image=self._img_bg)
 
-        # Add labels, the same as.. add text on canvas
+        # Add labels, the same as. add text on canvas
         self._canvas.create_text(90, 80, text='Server', font=('Calibri', 28), fill='#808080')
         self._canvas.create_text(50, 180, text='IP:', font=FONT_BUTTON, fill='#000000', anchor='w')
         self._canvas.create_text(50, 230, text='Port:', font=FONT_BUTTON, fill='#000000', anchor='w')
@@ -94,8 +96,8 @@ class CServerGUI(CServerBL):
         self._btn_stop.place(x=650, y=130)
 
         self._btn_register = tk.Button(self._canvas, text="Register", font=FONT_BUTTON, fg="#c0c0c0", compound="center",
-                                   width=img_btn_w, height=img_btn_h, image=self._img_btn, bd=0,
-                                     state="disabled")
+                                       width=img_btn_w, height=img_btn_h, image=self._img_btn, bd=0,
+                                       state="disabled")
         self._btn_register.place(x=650, y=210)
 
         # Create Entry boxes
@@ -147,7 +149,6 @@ class CServerGUI(CServerBL):
         self._btn_register.config(state="disabled")
         self.stop_server()
 
-
     def fernet_func(self, data_serv):
         # Key generation
         key = Fernet.generate_key()
@@ -163,7 +164,6 @@ class CServerGUI(CServerBL):
         print(encrypted_data)
         print(decrypted_data)
         return [encrypted_data, key]
-
 
     def data_base(self, login, password, key):
         # Connect to DB
@@ -207,21 +207,18 @@ class CServerGUI(CServerBL):
         # data base
         self.data_base(login, encrypted_passw, key)
 
-
-
-
-    def fire_event(self, enum_event: int, client_handl):
+    def fire_event(self, enum_event: int, client_handle):
 
         if enum_event == NEW_CONNECTION:
-            address = client_handl._address
+            address = client_handle._address
             self.tree.insert("", tk.END, value=address)
         if enum_event == NEW_REGISTRATION:
-            address = client_handl._address
+            address = client_handle._address
             self.tree1.insert("", tk.END, value=address)
         if enum_event == CLOSE_CONNECTION:
             for item in self.tree.get_children():
                 values = self.tree.item(item, 'value')
-                if values and str(client_handl._address[1]) in [str(value).lower() for value in values]:
+                if values and str(client_handle._address[1]) in [str(value).lower() for value in values]:
                     self.tree.delete(item)
 
 

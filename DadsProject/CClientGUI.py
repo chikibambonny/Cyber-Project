@@ -3,9 +3,10 @@ from tkinter import *
 from CClientBL import *
 from CLoginGUI import *
 import json
-from CProtocol26 import *
-from CProtocol27 import *
-from CProtocol import *
+# from CProtocol26 import *
+# from CProtocol27 import *
+# from CProtocol import *
+import CProtocol
 
 BTN_IMAGE = "./Images/GUI - button.png"
 BG_IMAGE = "./Images/GUI - BG.png"
@@ -55,7 +56,7 @@ class CClientGUI(CClientBL):
         self._canvas.pack(fill='both', expand=True)
         self._canvas.create_image(0, 0, anchor="nw", image=self._img_bg)
 
-        # Add labels, the same as.. add text on canvas
+        # Add labels, the same as. add text on canvas
         self._canvas.create_text(90, 50, text='Client', font=('Calibri', 28), fill='#808080')
         self._canvas.create_text(50, 130, text='IP:', font=FONT_BUTTON, fill='#000000', anchor='w')
         self._canvas.create_text(50, 180, text='Port:', font=FONT_BUTTON, fill='#000000', anchor='w')
@@ -87,8 +88,8 @@ class CClientGUI(CClientBL):
         self._btn_send.place(x=650, y=210)
 
         self._btn_login = tk.Button(self._canvas, text="Login", font=FONT_BUTTON, fg="#c0c0c0", compound="center",
-                                   width=img_btn_w, height=img_btn_h, image=self._img_btn, bd=0,
-                                   command=self.on_click_login, state="disabled")
+                                    width=img_btn_w, height=img_btn_h, image=self._img_btn, bd=0,
+                                    command=self.on_click_login, state="disabled")
         self._btn_login.place(x=650, y=290)
 
         # Create Entry boxes
@@ -137,28 +138,21 @@ class CClientGUI(CClientBL):
     def on_click_send(self):
         cmd = self._entry_Send_command.get()
         add = self._entry_Send_Add.get()
-        if add == "Additional": add = ""
-        if check_cmd(cmd) == 2:
-            protocol = CProtocol27()
-        else:
-            protocol = CProtocol26()
+        if add == "Additional":
+            add = ""
         if cmd:
-            if add:
-                self.send_data(protocol, cmd, add)
-            else:
-                self.send_data(protocol, cmd)
+            self.send_data(CProtocol, cmd, add)
             # Use "after" to update the GUI after a short delay
             self._root.after(100, self.update_received_entry)
 
     def on_click_login(self):
         def callback_register(data: json):
-            write_to_log(f"[CLIENT GUI] Registartion - Received data from Login Wnd: {data}")
+            write_to_log(f"[CLIENT GUI] Registration - Received data from Login Wnd: {data}")
             self._entry_Send_Add.delete(0, END)
             self._entry_Send_command.delete(0, END)
             self._entry_Send_command.insert(0, "REG")
             self._entry_Send_Add.insert(0, data)
             self.on_click_send()
-
 
         def callback_signin(data: json):
             write_to_log(f"[CLIENT GUI] SignIn - Received data from Login Wnd: {data}")

@@ -1,6 +1,9 @@
 import logging
 import socket
-from abc import ABC
+from datetime import datetime
+import socket
+import random
+
 
 # prepare Log file
 LOG_FILE = 'LOG.log'
@@ -29,38 +32,44 @@ def write_to_log(msg):
     print(msg)
 
 
-def check_cmd(data) -> int:
-    data = data.upper()
-    if data == Cpr26:
-        return 1
-    else:
-        return 0
+def check_cmd(data):
+    """Check if the command is defined in the protocol (e.g. RAND, NAME, TIME, EXIT)"""
+    return data in Cpr26
 
 
-def receive_msg(my_socket: socket):
-    # receive msg from client or server
+def create_request_msg(data):
+    """Create a valid protocol message, will be sent by client, with length field"""
+    request = ''
+    if data in ("TIME", "NAME", "RAND", "EXIT"):
+        request = "04" + data
+
+    return request
+
+
+def create_response_msg(data):
+    """Create a valid protocol message, will be sent by server, with length field"""
+    response = "05Error"
+    if data == "TIME":
+        response = str(datetime.now())
+    elif data == "NAME":
+        response = socket.gethostname()[0]
+    elif data == "RAND":
+        response = f"{random.randint(1, 1000)}"
+    elif data == "EXIT":
+        response = "Bye"
+    return f"{len(response):02}{response}"
+
+
+def get_msg(my_socket: socket):
     """Extract message from protocol, without the length field
        If length field does not include a number, returns False, "Error" """
-    str_header = my_socket.recv(HEADER_LEN).decode()
-    write_to_log(f"[Protocol - GET_MSG] str_header - {str_header}")
-    if str_header == '': return False, ''
+    str_header = my_socket.recv(2).decode()
+    write_to_log(f"[Protocol] str_header - {str_header}")
     length = int(str_header)
-    write_to_log(f"[Protocol - GET_MSG] length - {length}")
+    write_to_log(f"[Protocol] length - {length}")
     if length > 0:
         buf = my_socket.recv(length).decode()
     else:
-        return False, ''
+        return False, ""
 
     return True, buf
-
-
-class CProtocol(ABC):
-
-    def __init__(self):
-        super().__init__()
-
-    def create_request_msg(self, cmd) -> str:
-        pass
-
-    def create_response_msg(self, cmd, args='') -> str:
-        pass

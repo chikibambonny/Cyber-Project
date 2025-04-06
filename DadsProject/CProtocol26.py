@@ -4,7 +4,7 @@ import socket
 import random
 
 
-class CProtocol26(CProtocol):
+class CProtocol26():
     def __init__(self):
         super().__init__()
 

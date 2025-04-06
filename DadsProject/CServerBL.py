@@ -1,18 +1,18 @@
 import json
 import socket
 import threading
+# from CProtocol26 import *
 from CProtocol import *
-from CProtocol26 import *
-from CProtocol27 import *
+# from CProtocol27 import *
+import CProtocol
 
-# виртуальные функции
-
-protocol = CProtocol27()
+protocol = CProtocol
 
 # events
 NEW_CONNECTION: int = 1
 CLOSE_CONNECTION: int = 2
 NEW_REGISTRATION: int = 3
+
 
 class CServerBL:
 
@@ -29,10 +29,8 @@ class CServerBL:
         self._client_handlers = []
         self._register_clients = []
 
-        _protocol26 = CProtocol26()
-        _protocol27 = CProtocol27()
-
-
+        # _protocol26 = CProtocol26()
+        # _protocol27 = CProtocol27()
 
     def delete_from_client_handlers(self, address):
         write_to_log(f"[CServer_BL] client_handlers list length: {len(self._client_handlers)}")
@@ -42,6 +40,7 @@ class CServerBL:
                 self._client_handlers.remove(el)
                 self._is_srv_running = False
         write_to_log(f"[CServer_BL] el deleted, list: {len(self._client_handlers)}")
+
     def stop_server(self):
         try:
             self._is_srv_running = False
@@ -49,7 +48,7 @@ class CServerBL:
             if self._server_socket is not None:
                 self._server_socket.close()
                 self._server_socket = None
-            write_to_log(f"[CSERVERBL] in stop_server: {len(self._client_handlers)}")
+            write_to_log(f"[SERVER_BL] in stop_server: {len(self._client_handlers)}")
             if len(self._client_handlers) > 0:
                 # Waiting to close all opened threads
                 for client_thread in self._client_handlers:
@@ -75,7 +74,8 @@ class CServerBL:
                 write_to_log(f"[SERVER_BL] Client connected {client_socket}{address} ")
                 write_to_log(f"[SERVER_BL address: {address}")
                 # Start Thread
-                cl_handler = CClientHandler(client_socket, address, self.fire_event, self.delete_from_client_handlers, self._register_clients, self.fire_event, self.register)
+                cl_handler = CClientHandler(client_socket, address, self.fire_event, self.delete_from_client_handlers,
+                                            self._register_clients, self.fire_event, self.register)
                 cl_handler.start()
                 self._client_handlers.append(cl_handler)
                 write_to_log(f"[SERVER_BL] ACTIVE CONNECTION {threading.active_count() - 1}")
@@ -83,18 +83,18 @@ class CServerBL:
                 self.fire_event(NEW_CONNECTION, cl_handler)
                 write_to_log("[SERVER_BL] NEW CONNECTION event invoked")
 
-
         # ??? something happens here
         # except Exception as e:
         #     write_to_log("[SERVER_BL] Exception in start_server fn : {}".format(e))
         finally:
             write_to_log(f"[SERVER_BL] Server thread is DONE")
 
-    def fire_event(self, enum_event: int, client_handl):
+    def fire_event(self, enum_event: int, client_handle):
         pass
 
     def register(self, login, password):
         pass
+
 
 class CClientHandler(threading.Thread):
 
@@ -116,7 +116,7 @@ class CClientHandler(threading.Thread):
         connected = True
         while connected:
             # 1. Get message from socket and check it
-            valid_msg, msg = receive_msg(self._client_socket)
+            valid_msg, msg = get_msg(self._client_socket)
             if valid_msg:
                 # 2. Save to log
                 write_to_log(f"[SERVER_BL] received from {self._address}] - {msg}")
