@@ -45,12 +45,13 @@ class CClientBL:
         else:
             write_to_log("[CClientBL] - run - no client socket")
 
-    def send_message(self, message):
-        write_to_log(f'[ClientBL] - message received for sending: {message}')
+    def send_message(self, action: str, data=None):
+        write_to_log(f'[ClientBL] - message received for sending: {action}; {data}')
+        msg = create_msg(action, data)
         if self._client_socket:
             try:
                 with self.lock:  # Acquire the lock
-                    self._client_socket.sendall((message + "\n").encode())
+                    self._client_socket.sendall((msg + "\n").encode())
             except Exception as e:
                 print(f"Error: {e}")
 
@@ -82,9 +83,9 @@ class CClientBL:
 
     def send_target(self):
         while self._client_socket:  # Only run if the socket is valid
-            msg = input()
-            self.send_message(msg)
-            if msg.upper() == DISCONNECT_MSG:
+            action, data = input()
+            self.send_message(action, data)
+            if action.upper() == EXIT_ACTION:
                 self.disconnect()  # Close the socket
                 return
 

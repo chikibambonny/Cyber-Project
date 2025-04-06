@@ -43,7 +43,11 @@ class Server:
         file.write('login: ')  # Prompt for login
         file.flush()
         login = file.readline().rstrip()  # Read client input
-        self.super_queue.put(Message(AUTHENTICATION_ACTION, [connection, address, file, login, current_thread()]))
+        write_to_log(f'[CServerBL] - gateman - login: {login}')
+        # kostyl
+        # act, login = parse_msg(file.readline().rstrip())
+        # write_to_log(f'[CServerBL] - gateman - act : {act}, login: {login}')
+        # self.super_queue.put(Message(AUTHENTICATION_ACTION, [connection, address, file, login, current_thread()]))
 
     # Reads incoming messages from client and puts them into the server's queue
     def clientin(self, client):

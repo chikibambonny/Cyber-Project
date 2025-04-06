@@ -5,6 +5,7 @@ import sys
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
 from CViewGUI import CViewGUI
+from CLoginGUI import CLoginGUI
 from protocol import *
 from config import *
 
@@ -76,12 +77,14 @@ class CClientGUI(CClientBL, object):
         # IP Address label and input field
         self.IPLabel = QtWidgets.QLabel(" IP Address:", self.verticalLayoutWidget_2)
         self.IPField = QtWidgets.QLineEdit(self.verticalLayoutWidget_2)
+        self.IPField.setText(SERVER_HOST)  # set default value
         self.gridLayout.addWidget(self.IPLabel, 1, 0)
         self.gridLayout.addWidget(self.IPField, 1, 1)
 
         # Port label and input field
         self.PortLabel = QtWidgets.QLabel(" Port:", self.verticalLayoutWidget_2)
         self.PortField = QtWidgets.QLineEdit(self.verticalLayoutWidget_2)
+        self.PortField.setText(str(PORT))  # set default value
         self.gridLayout.addWidget(self.PortLabel, 2, 0)
         self.gridLayout.addWidget(self.PortField, 2, 1)
 
@@ -143,12 +146,6 @@ class CClientGUI(CClientBL, object):
 
         # Finalize main window setup
         MainWindow.setCentralWidget(self.centralwidget)
-
-        # Setup menu bar and status bar
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        MainWindow.setStatusBar(self.statusbar)
 
         # Apply translations for UI elements
         self.retranslateUi(MainWindow)
@@ -229,7 +226,7 @@ class CClientGUI(CClientBL, object):
     def on_click_send(self):
         text = self.SendField.text()
         write_to_log(f'[ClientGUI] message to be sent: {text}')
-        self.send_message(text)
+        self.send_message(TEXT_ACTION, text)
         self.SendField.clear()
 
     def on_click_login(self):
@@ -237,6 +234,11 @@ class CClientGUI(CClientBL, object):
         self.LoginBtn.setEnabled(False)
         self.PlayBtn.setEnabled(True)
         # self.SendBtn.setEnabled(True)
+        self.login_wnd = CLoginGUI()
+        if self.login_wnd.exec_():  # Show the dialog and wait for it to close
+            print("Login successful")
+        else:
+            print("Login canceled")
 
     def on_click_play(self):
         self.send_message(PLAY_ACTION)

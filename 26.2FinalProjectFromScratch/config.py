@@ -55,6 +55,7 @@ FIELDS = "rgb(255, 255, 255)"
 LABELS = "rgb(125, 132, 88)"
 SHADOW_BUTTONS = "rgb(230, 150, 60)"  # Slightly darker shade for shadow effect
 DIS_SHADOW_BUTTONS = "rgb(220, 180, 120)"  # Softer shadow for disabled buttons
+TEXT_COL = "rgb(60, 40, 13)"
 
 # drawing window, palette https://coolors.co/c03935-e16a30-f5ad33-387b5c-3877aa-7c6d8e-d691ad-1e0c00-fff4e2
 '''
@@ -98,7 +99,7 @@ def set_designs(buttons: list, fields: list, labels: list):
         border-radius: 8px;
     }}
 """
-    field_style = f"background-color: {FIELDS};"
+    field_style = f"background-color: {FIELDS}; color: {TEXT_COL}"
     label_style = f"color: {LABELS}"
 
     for button in buttons:
