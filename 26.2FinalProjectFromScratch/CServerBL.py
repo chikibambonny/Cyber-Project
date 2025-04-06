@@ -1,28 +1,31 @@
 #!/usr/bin/python
 import socket
 from queue import SimpleQueue
-from threading import Thread, current_thread
+from threading import Thread
 from config import *
 from protocol import *
 import random
 
 
-# Message object to encapsulate action and data
-class Message:
-    def __init__(self, action, data=None):
-        self.action = action  # Action type (e.g., authentication, msg, logout)
-        self.data = data  # Additional data
-
-
 # Class to handle client connections
 class ClientConnection:
-    def __init__(self, connection, address, file, login):
+    def __init__(self, connection, address, login=None):
         self.connection = connection  # Client socket
         self.address = address  # Client address
-        self.file = file  # File object for socket communication
         self.login = login  # Client login name
         self.qin = SimpleQueue()  # Queue for incoming messages
         self.qout = SimpleQueue()  # Queue for outgoing messages
+        self.qsuper = None  # Will be set later
+        self.ci = None  # Input thread
+        self.co = None  # Output thread
+
+
+# Message object to encapsulate action and data
+class Message:
+    def __init__(self, action, sender: ClientConnection, data=None):
+        self.action = action
+        self.sender = sender  # ClientConnection object
+        self.data = data  # Additional data (depends on action)
 
 
 # Server class to manage connections and messages
@@ -37,161 +40,150 @@ class Server:
         self.current_word: str = None
         self.guessed: str = None  # login of the one who guessed
 
-    # Handles initial client login
-    def gateman(self, connection, address):
-        file = connection.makefile(mode='rw', buffering=1)  # Create file object for socket
-        file.write('login: ')  # Prompt for login
-        file.flush()
-        login = file.readline().rstrip()  # Read client input
-        write_to_log(f'[CServerBL] - gateman - login: {login}')
-        # kostyl
-        # act, login = parse_msg(file.readline().rstrip())
-        # write_to_log(f'[CServerBL] - gateman - act : {act}, login: {login}')
-        # self.super_queue.put(Message(AUTHENTICATION_ACTION, [connection, address, file, login, current_thread()]))
-
-    # Reads incoming messages from client and puts them into the server's queue
+    # receive incoming messages from the client
     def clientin(self, client):
-        for word in client.file:
-            client.qsuper.put(Message(TEXT_ACTION, (client, word.rstrip())))  # Put messages into server queue
-        client.qsuper.put(Message(LOGOUT_ACTION, client))  # Notify server of client logout
-
-    # Sends outgoing messages to client
-    def clientout(self, client):
-        client.file.write(f'Welcome\n')  # Welcome message
-        client.file.flush()
-
         while True:
-            m = client.qout.get()  # Get message from queue
-            if m.action == EXIT_ACTION:  # Exit command
-                client.file.write('Good bye\n')
+            try:
+                msg = client.connection.recv(1024).decode()
+                # if not msg:
+                   # break
+                action, data = parse_msg(msg)
+                self.super_queue.put(Message(action, client, data))
+            except Exception as e:
+                write_to_log(f'[Server] - clientin - exception: {e}')
                 break
-            elif m.action == TEXT_ACTION:  # Regular message
-                client.file.write(m.data + '\n')
-                client.file.flush()
+        # self.super_queue.put(Message(EXIT_ACTION, client))
 
-    # Validates client credentials
-    def validate(self, connection, address, file, login):
+    # send outcoming messages to the client
+    def clientout(self, client):
+        client.connection.send(b'Welcome\n')
+        while True:
+            m = client.qout.get()
+            write_to_log(f"[server] - clientout - msg action:{m.action} data {m.data}")
+            if m.action == EXIT_ACTION:
+                write_to_log("[server] - clientout - EXIT_ACTION triggered")
+                # client.connection.send(b'Good bye\n')
+                break
+            else:
+                send = create_msg(m.action, m.data)
+                client.connection.send(send.encode())
+
+    def validate(self, login):
         if login not in self.users:
-            return False, 'Permission denied'  # Reject if login not in users
+            return False, 'Permission denied'
         if login in self.connected:
-            return False, f'Already logged in from {self.connected[login][0].address}'  # Reject if user already connected
-        return True, ClientConnection(connection, address, file, login)  # Accept login
+            return False, f'Already logged in from {self.connected[login][0].address}'
+        return True, None
 
-    # Broadcasts message to all connected clients (except sender and root)
-    def broadcast(self, client, word):
-        msg = client.login + ': ' + word
-        for connection, role in self.connected.values():  # unpack the tuple
-            if not (connection is client or connection.login == 'root'):
-                connection.qout.put(Message(TEXT_ACTION, msg))  # Add message to client's outgoing queue
+    def broadcast(self, sender, word):
+        msg = sender.login + ': ' + word
+        for connection, role in self.connected.values():
+            if connection != sender and connection.login != 'root':
+                connection.qout.put(Message(TEXT_ACTION, msg))
 
     def get_random_word(self):
-        # Open the file and read the words.txt into a list
         with open(WORDS_BANK, "r") as file:
             words = file.read().splitlines()
-        # Return a random word from the list
         return random.choice(words)
 
     def assign_roles(self) -> str:
         if not self.connected:
-            msg = 'no clients to assign roles to'
+            return 'no clients to assign roles to'
+        for key in self.connected:
+            self.connected[key][1] = GUESS_ROLE
+        if self.guessed is None:
+            artist = random.choice(list(self.connected.keys()))
         else:
-            for key in self.connected:
-                self.connected[key][1] = GUESS_ROLE
-            if self.guessed is None:
-                artist = random.choice(self.connected.keys())
-            else:
-                artist = self.guessed
-            self.connected[self.artist][1] = DRAW_ROLE
-            return artist
+            artist = self.guessed
+        self.connected[artist][1] = DRAW_ROLE
+        return artist
 
     def send_roles(self):
         artist_login = self.assign_roles()
         for connection, role in self.connected.values():
-            if not (connection.login == 'root'):
+            if connection.login != 'root':
                 connection.qout.put(Message(ROLE_ACTION, role))
-        self.broadcast(f'[Server] {artist_login} is drawing now')
+        self.broadcast(self.connected['root'][0], f'[Server] {artist_login} is drawing now')
         self.current_word = self.get_random_word()
         self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.current_word))
 
-
-    # Main server function
     def run_server(self):
-        self.connected['root'] = (ClientConnection(None, None, None, 'root'), None)  # Root user placeholder
+        self.connected['root'] = (ClientConnection(None, None, 'root'), None)
         write_to_log(f'[server] - is running')
 
         while True:
-            msg = self.super_queue.get()  # Get message from queue
-            write_to_log(f'[Server] - current message: {msg.data} ')
-            # connection, address, file, _ = msg.data
-            # write_to_log(f'[CServerBL] - msg.data parse - connection: {connection}, adress: {address}, file: {file}')
+            msg = self.super_queue.get()
+            write_to_log(f'[Server] - current message: {msg.action} {msg.data}')
             if msg.action == CONNECTION_ACTION:
-                g = Thread(target=self.gateman, args=(*msg.data,))  # Start login thread
-                g.start()
-            elif msg.action == AUTHENTICATION_ACTION:
-                gate_thread = msg.data.pop()
-                gate_thread.join()  # Wait for login thread to complete
-                allow, args = self.validate(*msg.data)  # Validate login
-                if allow:
-                    # Notify clients of connection
-                    self.broadcast(self.connected['root'][0], f'{args.login} connected from {args.address}')
-                    args.qsuper = self.super_queue
-                    # Start input thread
-                    args.ci = Thread(target=self.clientin, args=(args,))
-                    # Start output thread
-                    args.co = Thread(target=self.clientout, args=(args,))
-                    args.ci.start()
-                    args.co.start()
-                    self.connected[args.login] = (args, GUESS_ROLE)  # Add client to connected list
+                connection, address = msg.data
+                write_to_log(f"[Server] - connection action - connection, address  retrieved ")
+                client = ClientConnection(connection, address)
+                write_to_log(f"[Server] - connection action - ClientConnection created")
+                client.qsuper = self.super_queue
+                write_to_log(f"[Server] - connection action - queue started")
+                client.ci = Thread(target=self.clientin, args=(client,))
+                client.co = Thread(target=self.clientout, args=(client,))
+                client.ci.start()
+                client.co.start()
+                write_to_log(f"[Server] - connection action - threads started")
+                # Optionally keep track of unauthenticated clients
+            elif msg.action == LOGIN_ACTION:
+                login = msg.data[0]
+                password = msg.data[1]
+                write_to_log(f'[Server] - login action - login: {login}  pass: {password}')
+                '''login = msg.data
+                client = msg.sender
+                is_valid, error = self.validate(login)
+                if is_valid:
+                    client.login = login
+                    self.connected[login] = (client, GUESS_ROLE)
+                    self.broadcast(self.connected['root'][0], f'{login} connected from {client.address}')
                 else:
-                    connection, address, file, _ = msg.data
-                    file.write(args + '\n')  # Send error message to client
-                    file.flush()
-                    file.close()
-                    connection.shutdown(socket.SHUT_WR)
-                    connection.close()
+                    client.qout.put(Message(TEXT_ACTION, error))
+                    client.qout.put(Message(EXIT_ACTION, None))
+                '''
+            elif msg.action == SIGNUP_ACTION:
+                login = msg.data[0]
+                password = msg.data[1]
+                write_to_log(f'[Server] - signup action - login: {login}  pass: {password}')
             elif msg.action == PLAY_ACTION:
-                # Send roles and the word
                 self.send_roles()
             elif msg.action == TEXT_ACTION:
-                self.broadcast(*msg.data)  # Broadcast message
-                if self.current_word:
-                    connection, address, file, _ = msg.data
-                    write_to_log(f'[CServerBL] - msg.data parse - connection: {connection}, adress: {address}, file: {file}')
-                    if file == self.current_word:
-                        self.guessed = connection.login
-                        self.broadcast(f'{self.guessed} guessed the word {self.current_word}')
-                        self.send_roles()
-
+                self.broadcast(msg.sender, msg.data)
+                if self.current_word and msg.data == self.current_word:
+                    self.guessed = msg.sender.login
+                    self.broadcast(self.connected['root'][0], f'{self.guessed} guessed the word {self.current_word}')
+                    self.send_roles()
             elif msg.action == EXIT_ACTION:
-                self.broadcast(self.connected['root'][0], f'{msg.data.login} left')  # Notify clients of logout
-                msg.data.qout.put(Message('exit'))  # Send exit message
-                msg.data.ci.join()
-                msg.data.co.join()
+                if msg.sender.login:
+                    self.broadcast(self.connected['root'][0], f'{msg.sender.login} left')
+                    try:
+                        del self.connected[msg.sender.login]
+                    except KeyError:
+                        pass
+                msg.sender.qout.put(Message(EXIT_ACTION, None))
+                msg.sender.ci.join()
+                msg.sender.co.join()
                 try:
-                    msg.data.file.close()
-                    msg.data.connection.shutdown(socket.SHUT_WR)
-                    msg.data.connection.close()
+                    msg.sender.connection.shutdown(socket.SHUT_WR)
+                    msg.sender.connection.close()
                 except:
                     pass
-                del self.connected[msg.data.login]  # Remove client from connected list
             else:
-                print('Unknown action')  # Debug unknown actions
+                print('Unknown action')
 
-
-    # Start the server
     def start(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create socket
-        self.sock.bind((self.host, self.port))  # Bind socket to host and port
-        self.sock.listen()  # Start listening for connections
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.bind((self.host, self.port))
+        self.sock.listen()
         write_to_log(f'[server] - is listening on {self.host}:{self.port}')
 
-        # Start the server thread
         server_thread = Thread(target=self.run_server)
         server_thread.start()
 
-        # Accept client connections and add them to the queue
         while True:
-            self.super_queue.put(Message(CONNECTION_ACTION, self.sock.accept()))
+            connection, address = self.sock.accept()
+            self.super_queue.put(Message(CONNECTION_ACTION, None, (connection, address)))
 
 
 # Main function to initialize and run the server

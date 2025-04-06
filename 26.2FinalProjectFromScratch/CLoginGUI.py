@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QLineEdit,QPushButton
 import sys
 from protocol import *
 from config import *
+from CClientBL import *
+import CClientBL
 
 class CLoginGUI(QDialog):
     def __init__(self):
@@ -60,12 +62,19 @@ class CLoginGUI(QDialog):
         username = self.UsernameField.text()
         password = self.PasswordField.text()
         write_to_log(f"[Login GUI] - handle login - login attempt: {username}, {password}")
-        # Add your login logic here
-        self.accept()
+        msg = create_msg(LOGIN_ACTION, (username, password))
+        CClientBL.send_message(msg)
+
+
 
     def handle_signup(self):
         print("Sign up button clicked")
-        # Add your signup logic here
+        username = self.UsernameField.text()
+        password = self.PasswordField.text()
+        write_to_log(f"[Login GUI] - handle signup - sign up attempt: {username}, {password}")
+        msg = create_msg(SIGNUP_ACTION, (username, password))
+        CClientBL.send_message(msg)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

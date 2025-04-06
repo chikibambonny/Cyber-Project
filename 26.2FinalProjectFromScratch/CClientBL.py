@@ -50,8 +50,11 @@ class CClientBL:
         msg = create_msg(action, data)
         if self._client_socket:
             try:
-                with self.lock:  # Acquire the lock
-                    self._client_socket.sendall((msg + "\n").encode())
+                # with self.lock:  # Acquire the lock
+                    # self._client_socket.sendall(msg.encode())
+                    # write_to_log(f'[ClientBL] - message sent: {action}; {data}')
+                self._client_socket.sendall(msg.encode())
+                write_to_log(f'[ClientBL] - message sent: {action}; {data}')
             except Exception as e:
                 print(f"Error: {e}")
 
