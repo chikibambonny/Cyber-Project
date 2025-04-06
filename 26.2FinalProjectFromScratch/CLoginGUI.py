@@ -62,8 +62,8 @@ class CLoginGUI(QDialog):
         username = self.UsernameField.text()
         password = self.PasswordField.text()
         write_to_log(f"[Login GUI] - handle login - login attempt: {username}, {password}")
-        msg = create_msg(LOGIN_ACTION, (username, password))
-        CClientBL.send_message(msg)
+        CClientBL.send_message(LOGIN_ACTION, (username, password))
+        write_to_log(f"[Login GUI] - handle login - message sent")
 
 
 
@@ -72,8 +72,8 @@ class CLoginGUI(QDialog):
         username = self.UsernameField.text()
         password = self.PasswordField.text()
         write_to_log(f"[Login GUI] - handle signup - sign up attempt: {username}, {password}")
-        msg = create_msg(SIGNUP_ACTION, (username, password))
-        CClientBL.send_message(msg)
+        CClientBL.send_message(SIGNUP_ACTION, (username, password))
+        write_to_log(f"[Login GUI] - handle signup - message sent")
 
 
 if __name__ == "__main__":
