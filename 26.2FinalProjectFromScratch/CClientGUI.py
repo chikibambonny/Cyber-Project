@@ -1,5 +1,3 @@
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 from CClientBL import *
@@ -234,7 +232,7 @@ class CClientGUI(CClientBL, object):
         self.LoginBtn.setEnabled(False)
         self.PlayBtn.setEnabled(True)
         # self.SendBtn.setEnabled(True)
-        self.login_wnd = CLoginGUI()
+        self.login_wnd = CLoginGUI(self)
         if self.login_wnd.exec_():  # Show the dialog and wait for it to close
             print("Login successful")
         else:

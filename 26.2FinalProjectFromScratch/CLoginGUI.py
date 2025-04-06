@@ -6,8 +6,10 @@ from CClientBL import *
 import CClientBL
 
 class CLoginGUI(QDialog):
-    def __init__(self):
+    def __init__(self, client):
         super().__init__()
+
+        self.client = client
 
         self.setWindowTitle("Login")
         self.setStyleSheet(f'background-color: {LIGHTBEIGE_BG};')
@@ -62,7 +64,7 @@ class CLoginGUI(QDialog):
         username = self.UsernameField.text()
         password = self.PasswordField.text()
         write_to_log(f"[Login GUI] - handle login - login attempt: {username}, {password}")
-        CClientBL.send_message(LOGIN_ACTION, (username, password))
+        self.client.send_message(LOGIN_ACTION, (username, password))
         write_to_log(f"[Login GUI] - handle login - message sent")
 
 
@@ -72,7 +74,7 @@ class CLoginGUI(QDialog):
         username = self.UsernameField.text()
         password = self.PasswordField.text()
         write_to_log(f"[Login GUI] - handle signup - sign up attempt: {username}, {password}")
-        CClientBL.send_message(SIGNUP_ACTION, (username, password))
+        self.client.send_message(SIGNUP_ACTION, (username, password))
         write_to_log(f"[Login GUI] - handle signup - message sent")
 
 

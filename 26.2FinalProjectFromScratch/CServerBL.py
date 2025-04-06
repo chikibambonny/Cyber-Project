@@ -45,8 +45,8 @@ class Server:
         while True:
             try:
                 msg = client.connection.recv(1024).decode()
-                # if not msg:
-                   # break
+                if not msg:
+                   break
                 action, data = parse_msg(msg)
                 self.super_queue.put(Message(action, client, data))
             except Exception as e:
@@ -59,9 +59,7 @@ class Server:
         client.connection.send(b'Welcome\n')
         while True:
             m = client.qout.get()
-            write_to_log(f"[server] - clientout - msg action:{m.action} data {m.data}")
             if m.action == EXIT_ACTION:
-                write_to_log("[server] - clientout - EXIT_ACTION triggered")
                 # client.connection.send(b'Good bye\n')
                 break
             else:
