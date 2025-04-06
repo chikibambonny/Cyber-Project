@@ -1,6 +1,8 @@
 import logging
 from config import *
 from queue import SimpleQueue
+import sqlite3
+from argon2 import PasswordHasher, exceptions as argon2_exceptions
 
 # =========== LOGGING ===========
 LOG_FILE = 'LOG.log'
@@ -40,9 +42,63 @@ def parse_msg(msg: str):
     return action, data
 
 
-# Message object to encapsulate action and data
-class Message:
-    def __init__(self, action, data=None):
-        self.action = action  # Action type (e.g., authentication, msg, logout)
-        self.data = data  # Additional data
-        return
+# =========== DATABASE ===========
+def init_user_db():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+
+ph = PasswordHasher()
+
+def hash_password(password: str) -> str:
+    """Hash a password using Argon2id."""
+    return ph.hash(password)
+
+def verify_password(hashed_password: str, input_password: str) -> bool:
+    """Verify a password against the stored hash."""
+    try:
+        return ph.verify(hashed_password, input_password)
+    except argon2_exceptions.VerifyMismatchError:
+        return False
+
+
+def register_user(username: str, password: str) -> tuple[bool, str]:
+    hashed = hash_password(password)
+    try:
+        with sqlite3.connect(DATABASE_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed))
+            conn.commit()
+            return True, "Signup successful."
+    except sqlite3.IntegrityError:
+        return False, "Username already exists."
+
+
+def authenticate_user(username: str, password: str) -> tuple[bool, str]:
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
+        result = cursor.fetchone()
+        if not result:
+            return False, "Username not found."
+        if verify_password(result[0], password):
+            return True, "Login successful."
+        else:
+            return False, "Incorrect password."
+
+
+
+
+
+
+if __name__ == "__main__":
+    init_user_db()
+

@@ -73,10 +73,10 @@ class Server:
             return False, f'Already logged in from {self.connected[login][0].address}'
         return True, None
 
-    def broadcast(self, sender, word):
-        msg = sender.login + ': ' + word
+    def broadcast(self, client, word):
+        msg = client.login + ': ' + word
         for connection, role in self.connected.values():
-            if connection != sender and connection.login != 'root':
+            if connection != client and connection.login != 'root':
                 connection.qout.put(Message(TEXT_ACTION, msg))
 
     def get_random_word(self):
@@ -126,32 +126,35 @@ class Server:
                 write_to_log(f"[Server] - connection action - threads started")
                 # Optionally keep track of unauthenticated clients
             elif msg.action == LOGIN_ACTION:
-                login = msg.data[0]
+                username = msg.data[0]
                 password = msg.data[1]
-                write_to_log(f'[Server] - login action - login: {login}  pass: {password}')
-                '''login = msg.data
-                client = msg.sender
-                is_valid, error = self.validate(login)
-                if is_valid:
-                    client.login = login
-                    self.connected[login] = (client, GUESS_ROLE)
-                    self.broadcast(self.connected['root'][0], f'{login} connected from {client.address}')
-                else:
-                    client.qout.put(Message(TEXT_ACTION, error))
-                    client.qout.put(Message(EXIT_ACTION, None))
-                '''
+                write_to_log(f'[Server] - login action - login: {username}  pass: {password}')
+                success, message = authenticate_user(username, password)
+                if success:
+                    write_to_log(f'[Server] - login - success')
+                    client.login = username
+                    self.connected[username] = (client, GUESS_ROLE)
+
             elif msg.action == SIGNUP_ACTION:
-                login = msg.data[0]
+                username = msg.data[0]
                 password = msg.data[1]
-                write_to_log(f'[Server] - signup action - login: {login}  pass: {password}')
+                write_to_log(f'[Server] - signup action - login: {username}  pass: {password}')
+                success, message = register_user(username, password)
+                if success:
+                    write_to_log(f'[Server] - signup - success')
+                    client.login = username
+                    self.connected[username] = (client, GUESS_ROLE)
+
             elif msg.action == PLAY_ACTION:
                 self.send_roles()
+
             elif msg.action == TEXT_ACTION:
                 self.broadcast(msg.sender, msg.data)
                 if self.current_word and msg.data == self.current_word:
                     self.guessed = msg.sender.login
                     self.broadcast(self.connected['root'][0], f'{self.guessed} guessed the word {self.current_word}')
                     self.send_roles()
+
             elif msg.action == EXIT_ACTION:
                 if msg.sender.login:
                     self.broadcast(self.connected['root'][0], f'{msg.sender.login} left')

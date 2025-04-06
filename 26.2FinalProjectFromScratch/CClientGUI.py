@@ -224,7 +224,7 @@ class CClientGUI(CClientBL, object):
     def on_click_send(self):
         text = self.SendField.text()
         write_to_log(f'[ClientGUI] message to be sent: {text}')
-        self.send_message(TEXT_ACTION, text)
+        self.send_message(TEXT_ACTION, (text, ))
         self.SendField.clear()
 
     def on_click_login(self):

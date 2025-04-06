@@ -36,13 +36,18 @@ ACTIONS = [EXIT_ACTION, WELCOME_ACTION, CONNECTION_ACTION, LOGIN_ACTION, SIGNUP_
 DRAW_ROLE = True
 GUESS_ROLE = False
 
+# =========== WORDS ===========
+WORDS_BANK = "words.txt"
+
+
+# =========== DATABASE ===========
+DATABASE_PATH = "users.db"
+
 
 # =========== UI ===========
 CLIENT_UI = './PYQTDesignerStuff/ClientUI.ui'
 CAST_IMG_PATH = "saved_drawings/drawing_20250325_221158.png"
 
-# =========== WORDS ===========
-WORDS_BANK = "words.txt"
 
 # =========== STYLES ===========
 # palette swatches https://coolors.co/f5bd4c-fbf6e3-543e12-ec9146-f4ccc2-7d8458-ffffff-b84169-be5277-c46283
