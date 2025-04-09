@@ -30,10 +30,10 @@ def create_msg(action: str, data=""):
             # add all the args
             for arg in data:
                 msg += arg + ARG_DELIMITER
+            msg = msg[:-1]
         elif isinstance(data, str):
             msg = action + ACT_DELIMITER + data
             # remove the last char (an excessive delimiter)
-        msg = msg[:-1]
         write_to_log(f"[Protocol] - create msg - message created: {msg}")
         return msg
     else:

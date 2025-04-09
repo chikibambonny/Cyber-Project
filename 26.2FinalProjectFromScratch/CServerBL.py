@@ -88,6 +88,8 @@ class Server:
         for connection, role in self.connected.values():
             if connection != client and connection.login != 'root':
                 connection.qout.put(Message(TEXT_ACTION, msg))
+        spec_msg = msg = client.login + ' (You): ' + word
+        client.qout.put(Message(TEXT_ACTION, spec_msg))
         write_to_log(f'[ServerBL] - broadcast - broadcasted : {msg}')
 
     def get_random_word(self):
