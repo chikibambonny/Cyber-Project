@@ -124,7 +124,7 @@ class Server:
                 if connection.login != 'root':
                     connection.qout.put(Message(ROLE_ACTION, self.connected['root'], role))
             write_to_log(f'[ServerBL] - send roles - roles sent')
-            self.broadcast(self.connected['root'][0], f'[Server] {artist_login} is drawing now')
+            self.broadcast(self.connected['root'][0], f'{artist_login} is drawing now')
             write_to_log(f"[ServerBL] - send roles- broadcasted who's drawing")
             self.current_word = self.get_random_word()
             write_to_log(f'[ServerBL] - send roles- the word is {self.current_word}')
