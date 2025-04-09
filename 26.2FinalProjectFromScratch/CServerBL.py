@@ -28,9 +28,9 @@ class ClientConnection:
 
 # Message object to encapsulate action and data
 class Message:
-    def __init__(self, action, data=None):
+    def __init__(self, action, sender: ClientConnection, data=None):
         self.action = action
-        # self.sender = sender  # ClientConnection object
+        self.sender = sender  # ClientConnection object
         self.data = data  # Additional data (depends on action)
 
 
@@ -52,10 +52,12 @@ class Server:
         while True:
             try:
                 msg = client.connection.recv(1024).decode()
+                write_to_log(f'[ServerBL] - clientin - received msg: {msg}')
                 if not msg:
                    break
                 action, data = parse_msg(msg)
-                self.super_queue.put(Message(action, data))
+                write_to_log(f'[ServerBL] - clientin - parsed msg: {action}, {str(data)}')
+                self.super_queue.put(Message(action, client, data))
             except Exception as e:
                 write_to_log(f'[Server] - clientin - exception: {e}')
                 break
@@ -63,7 +65,7 @@ class Server:
 
     # send outcoming messages to the client
     def clientout(self, client):
-        client.qout.put(Message(TEXT_ACTION, WELCOME_MSG))
+        client.qout.put(Message(TEXT_ACTION, self.connected['root'], WELCOME_MSG))
         while True:
             m = client.qout.get()
             if m.action == EXIT_ACTION:
@@ -72,7 +74,6 @@ class Server:
             elif m.data:
                 send = create_msg(m.action, m.data)
                 client.connection.send(send.encode())
-
 
     def validate(self, login):
         # if login not in self.users:
@@ -87,9 +88,9 @@ class Server:
         write_to_log(f'[ServerBL] - broadcast - broadcasting : {msg}')
         for connection, role in self.connected.values():
             if connection != client and connection.login != 'root':
-                connection.qout.put(Message(TEXT_ACTION, msg))
+                connection.qout.put(Message(TEXT_ACTION, self.connected['root'], msg))
         spec_msg = msg = client.login + ' (You): ' + word
-        client.qout.put(Message(TEXT_ACTION, spec_msg))
+        client.qout.put(Message(TEXT_ACTION, self.connected['root'], spec_msg))
         write_to_log(f'[ServerBL] - broadcast - broadcasted : {msg}')
 
     def get_random_word(self):
@@ -98,25 +99,40 @@ class Server:
         return random.choice(words)
 
     def assign_roles(self) -> str:
-        if not self.connected:
-            return 'no clients to assign roles to'
+        eligible_keys = [k for k in self.connected if k not in ('root', '')]
+
+        if not eligible_keys:
+            return ""
         for key in self.connected:
-            self.connected[key][1] = GUESS_ROLE
-        if self.guessed is None:
-            artist = random.choice(list(self.connected.keys()))
+            old_value = self.connected[key]
+            self.connected[key] = (old_value[0], GUESS_ROLE)
+        if self.guessed == "":
+            artist = random.choice(eligible_keys)
+            write_to_log(f'[ServerBL] - assign roles- the first artist is {artist}')
         else:
             artist = self.guessed
-        self.connected[artist][1] = DRAW_ROLE
+            write_to_log(f'[ServerBL] - assign roles- the artist is: {artist}, because they guessed: {self.guessed}')
+        old_value = self.connected[artist]
+        self.connected[artist] = (old_value[0], DRAW_ROLE)
         return artist
 
     def send_roles(self):
         artist_login = self.assign_roles()
-        for connection, role in self.connected.values():
-            if connection.login != 'root':
-                connection.qout.put(Message(ROLE_ACTION, role))
-        self.broadcast(self.connected['root'][0], f'[Server] {artist_login} is drawing now')
-        self.current_word = self.get_random_word()
-        self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.current_word))
+        if artist_login:
+            write_to_log(f'[ServerBL] - send roles- artist assigned ')
+            for connection, role in self.connected.values():
+                if connection.login != 'root':
+                    connection.qout.put(Message(ROLE_ACTION, self.connected['root'], role))
+            write_to_log(f'[ServerBL] - send roles - roles sent')
+            self.broadcast(self.connected['root'][0], f'[Server] {artist_login} is drawing now')
+            write_to_log(f"[ServerBL] - send roles- broadcasted who's drawing")
+            self.current_word = self.get_random_word()
+            write_to_log(f'[ServerBL] - send roles- the word is {self.current_word}')
+            self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.connected['root'], self.current_word))
+            write_to_log(f'[ServerBL] - send roles- the word is sent to the artist')
+        else:
+            self.broadcast(self.connected['root'][0], 'not enough users to choose roles')
+
 
     def run_server(self):
         self.connected['root'] = (ClientConnection(None, None, 'root'), None)
@@ -141,9 +157,10 @@ class Server:
                 client.ci.start()
                 client.co.start()
                 write_to_log(f"[Server] - connection action - threads started")
-                client.qout.put(Message(TEXT_ACTION, f'You are {client.login}. Login to save progress'))
+                client.qout.put(Message(TEXT_ACTION, self.connected['root'], f'You are {client.login}. Login to save progress'))
                 # Optionally keep track of unauthenticated clients
             elif msg.action == LOGIN_ACTION:
+                client = msg.sender
                 write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 username = msg.data[0]
                 password = msg.data[1]
@@ -163,6 +180,7 @@ class Server:
                         client.qout.put(Message(TEXT_ACTION, message))
 
             elif msg.action == SIGNUP_ACTION:
+                client = msg.sender
                 write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 username = msg.data[0]
                 password = msg.data[1]
@@ -179,9 +197,11 @@ class Server:
                     client.qout.put(Message(TEXT_ACTION, message))
 
             elif msg.action == PLAY_ACTION:
+                write_to_log(f'[ServerBL] - play action - play received')
                 self.send_roles()
 
             elif msg.action == TEXT_ACTION:
+                client = msg.sender
                 write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 write_to_log(f'[ServerBL] - text action - client: {client.login}, data: {msg.data[0]}')
                 self.broadcast(client, msg.data[0])
@@ -193,6 +213,7 @@ class Server:
                     self.send_roles()
 
             elif msg.action == EXIT_ACTION:
+                client = msg.sender
                 if client:
                     self.broadcast(self.connected['root'][0], f'{client} left')
                     try:
@@ -221,7 +242,7 @@ class Server:
 
         while True:
             connection, address = self.sock.accept()
-            self.super_queue.put(Message(CONNECTION_ACTION, (connection, address)))
+            self.super_queue.put(Message(CONNECTION_ACTION, self.connected['root'], (connection, address)))
 
 
 # Main function to initialize and run the server

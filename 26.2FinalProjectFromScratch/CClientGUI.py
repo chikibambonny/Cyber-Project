@@ -195,11 +195,21 @@ class CClientGUI(CClientBL, object):
     def update_field_target(self, text_queue, field):
         while True:
             text = text_queue.get()  # Get message from queue
+            write_to_log(f'[ClientGUI] - update target - got from queue: {text}')
             if text is None:
                 return
             action, parsed_text = text.split(ACT_DELIMITER)
             if action == TEXT_ACTION:
                 field.appendPlainText(parsed_text)
+            elif action == ROLE_ACTION:
+                if parsed_text == DRAW_ROLE:
+                    QtCore.QTimer.singleShot(0, lambda: self.DrawBtn.setEnabled(True))
+                    QtCore.QTimer.singleShot(0, lambda: field.appendPlainText('Time to draw!'))
+                elif parsed_text == GUESS_ROLE:
+                    QtCore.QTimer.singleShot(0, lambda: self.DrawBtn.setEnabled(False))
+                    QtCore.QTimer.singleShot(0, lambda: field.appendPlainText('Time to guess!'))
+            elif action == WORD_ACTON:
+                field.appendPlainText(f'Your word to draw is: {parsed_text}')
             else:
                 field.appendPlainText(text)
 
@@ -243,7 +253,8 @@ class CClientGUI(CClientBL, object):
             print("Login canceled")
 
     def on_click_play(self):
-        self.send_message(PLAY_ACTION)
+        write_to_log(f'[ClientGUI] - play button clicked')
+        self.send_message(PLAY_ACTION, 'play')  # it doesnt cae about play data anyways, but exit command gets triggered by empty data
 
     def on_click_draw(self):
         self.drawing_wnd = CDrawingGUI()
