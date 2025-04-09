@@ -63,7 +63,7 @@ class Server:
 
     # send outcoming messages to the client
     def clientout(self, client):
-        client.connection.send(b'Welcome\n')
+        client.qout.put(Message(TEXT_ACTION, WELCOME_MSG))
         while True:
             m = client.qout.get()
             if m.action == EXIT_ACTION:
@@ -141,8 +141,10 @@ class Server:
                 client.ci.start()
                 client.co.start()
                 write_to_log(f"[Server] - connection action - threads started")
+                client.qout.put(Message(TEXT_ACTION, f'You are {client.login}. Login to save progress'))
                 # Optionally keep track of unauthenticated clients
             elif msg.action == LOGIN_ACTION:
+                write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 username = msg.data[0]
                 password = msg.data[1]
                 write_to_log(f'[Server] - login action - login: {username}  pass: {password}')
@@ -155,12 +157,13 @@ class Server:
                         del self.connected[client.login]  # remove the anonymous connection of the same user
                         client.login = username
                         self.connected[username] = (client, GUESS_ROLE)
-                        client.qout.put(create_msg(TEXT_ACTION, message))
+                        client.qout.put(Message(TEXT_ACTION, message))
                     else:
                         write_to_log(f'[Server] - login - not validated')
-                        client.qout.put(create_msg(TEXT_ACTION, message))
+                        client.qout.put(Message(TEXT_ACTION, message))
 
             elif msg.action == SIGNUP_ACTION:
+                write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 username = msg.data[0]
                 password = msg.data[1]
                 write_to_log(f'[Server] - signup action - login: {username}  pass: {password}')
@@ -170,15 +173,16 @@ class Server:
                     write_to_log(f'[Server] - signup - success')
                     client.login = username
                     self.connected[username] = (client, GUESS_ROLE)
-                    client.qout.put(create_msg(TEXT_ACTION, message))
+                    client.qout.put(Message(TEXT_ACTION, message))
                 else:
                     write_to_log(f'[Server] - signup - unsuccessful')
-                    client.qout.put(create_msg(TEXT_ACTION, message))
+                    client.qout.put(Message(TEXT_ACTION, message))
 
             elif msg.action == PLAY_ACTION:
                 self.send_roles()
 
             elif msg.action == TEXT_ACTION:
+                write_to_log(f'[Server] DEBUG - current message is from {client.login}')
                 write_to_log(f'[ServerBL] - text action - client: {client.login}, data: {msg.data[0]}')
                 self.broadcast(client, msg.data[0])
                 write_to_log(f'[ServerBL] - text action - BROADCASTED client: {client.login}, data: {msg.data[0]}')

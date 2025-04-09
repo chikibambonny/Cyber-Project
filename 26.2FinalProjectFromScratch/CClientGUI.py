@@ -197,7 +197,11 @@ class CClientGUI(CClientBL, object):
             text = text_queue.get()  # Get message from queue
             if text is None:
                 return
-            field.appendPlainText(text)
+            action, parsed_text = text.split(ACT_DELIMITER)
+            if action == TEXT_ACTION:
+                field.appendPlainText(parsed_text)
+            else:
+                field.appendPlainText(text)
 
     def on_click_connect(self):
         ip = self.IPField.text()

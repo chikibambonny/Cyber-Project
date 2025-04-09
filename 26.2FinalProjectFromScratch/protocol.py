@@ -114,7 +114,7 @@ def authenticate_user(username: str, password: str) -> tuple[bool, str]:
             return False, "Username not found."
         elif verify_password(result[0], password):
             write_to_log(f'[Protocol] - authenticate - successful')
-            return True, "Login successful."
+            return True, f'Logged in as {username}'
         else:
             write_to_log(f'[Protocol] - authenticate - false, incorrect password')
             return False, "Incorrect password."
