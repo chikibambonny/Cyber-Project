@@ -8,6 +8,7 @@ FORMAT: str = 'utf-8'
 DISCONNECT_MSG: str = "EXIT"
 WELCOME_MSG: str = "Welcome"
 MAX_CONNECTIONS: int = 5  # maximal number of players
+# COUNT_ANON = 0  # count anonymous players
 
 ACT_DELIMITER = ">"
 ARG_DELIMITER = "<"
@@ -35,6 +36,9 @@ ACTIONS = [EXIT_ACTION, WELCOME_ACTION, CONNECTION_ACTION, LOGIN_ACTION, SIGNUP_
 # roles
 DRAW_ROLE = True
 GUESS_ROLE = False
+
+# defaults
+ANON_NAME = "Anonymous"
 
 # =========== WORDS ===========
 WORDS_BANK = "words.txt"

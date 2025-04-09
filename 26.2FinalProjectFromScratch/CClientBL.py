@@ -50,13 +50,13 @@ class CClientBL:
         msg = create_msg(action, data)
         if self._client_socket:
             try:
-                # with self.lock:  # Acquire the lock
-                    # self._client_socket.sendall(msg.encode())
-                    # write_to_log(f'[ClientBL] - message sent: {action}; {data}')
-                self._client_socket.sendall(msg.encode())
-                write_to_log(f'[ClientBL] - message sent: {action}; {data}')
+                with self.lock:  # Acquire the lock
+                    self._client_socket.sendall(msg.encode())
+                    write_to_log(f'[ClientBL] - message sent: {action}; {data}')
+                # self._client_socket.sendall(msg.encode())
+                # write_to_log(f'[ClientBL] - message sent: {action}; {data}')
             except Exception as e:
-                print(f"Error: {e}")
+                write_to_log(f"[ClientBL] - send message - Error: {e}")
 
     def disconnect(self):
         if self._client_socket:
@@ -75,13 +75,13 @@ class CClientBL:
             try:
                 msg = self._client_socket.recv(1024).decode()
                 self.text_queue.put(msg)
-                write_to_log(f"[ClientBL] - Server response: {msg}")
+                write_to_log(f'[ClientBL] - receive target - received and put into q: {msg}')
                 if not msg:  # If the server closes the connection
                     write_to_log("[ClientBL] - Server disconnected.")
                     break
-                print(f"Server: {msg}")
+                # print(f"Server: {msg}")
             except Exception as e:
-                print(f"Error receiving message: {e}")
+                write_to_log(f"[ClientBL] - receive target - Error receiving message: {e}")
                 break
 
     def send_target(self):
