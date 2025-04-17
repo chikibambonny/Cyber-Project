@@ -122,7 +122,7 @@ class Server:
             write_to_log(f'[ServerBL] - send roles- artist assigned ')
             for connection, role in self.connected.values():
                 if connection.login != 'root':
-                    connection.qout.put(Message(ROLE_ACTION, self.connected['root'], role))
+                    connection.qout.put(Message(ROLE_ACTION, self.connected['root'], str(role)))
             write_to_log(f'[ServerBL] - send roles - roles sent')
             self.broadcast(self.connected['root'][0], f'{artist_login} is drawing now')
             write_to_log(f"[ServerBL] - send roles- broadcasted who's drawing")
@@ -206,11 +206,16 @@ class Server:
                 write_to_log(f'[ServerBL] - text action - client: {client.login}, data: {msg.data[0]}')
                 self.broadcast(client, msg.data[0])
                 write_to_log(f'[ServerBL] - text action - BROADCASTED client: {client.login}, data: {msg.data[0]}')
-                if self.current_word and msg.data == self.current_word:
-                    write_to_log(f'[ServerBL] - text action - the word was guessed: {self.current_word}')
-                    self.guessed = client.login
-                    self.broadcast(self.connected['root'][0], f'{self.guessed} guessed the word {self.current_word}')
-                    self.send_roles()
+                if self.current_word:
+                    write_to_log(f'[ServerBL] - text action - current word exists')
+                    if msg.data == self.current_word:
+                        write_to_log(f'[ServerBL] - received words matches the current word')
+                        write_to_log(f'[ServerBL] - text action - the word was guessed: {self.current_word}')
+                        self.guessed = client.login
+                        self.broadcast(self.connected['root'][0], f'{self.guessed} guessed the word {self.current_word}')
+                        self.send_roles()
+                else:
+                    write_to_log(f'[ServerBL] - text action - current word doesnt exist')
 
             elif msg.action == EXIT_ACTION:
                 client = msg.sender

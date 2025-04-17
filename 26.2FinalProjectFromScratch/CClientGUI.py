@@ -1,11 +1,15 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
+
+from PyQt5.QtCore import QTimer
+
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
 from CViewGUI import CViewGUI
 from CLoginGUI import CLoginGUI
 from protocol import *
 from config import *
+from queue import SimpleQueue
 
 
 class CClientGUI(CClientBL, object):
@@ -13,7 +17,11 @@ class CClientGUI(CClientBL, object):
         super().__init__()
 
         self._client_socket = None
-        self.update_field_thread = None
+        self.receive_update_thread = None
+        self.gui_updates = None
+
+        self.view_wnd = None
+        self.drawing_wnd = None
 
         # fields
         self.IPField = None
@@ -34,6 +42,11 @@ class CClientGUI(CClientBL, object):
         self.PortLabel = None
         self.ReceiveLabel = None
         self.SendLabel = None
+
+        # Timer to process the queue in the main thread
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.process_gui_queue)
+        self.timer.start(50)
 
     def setupUi(self, MainWindow):
         """Sets up the UI for the main window."""
@@ -170,8 +183,8 @@ class CClientGUI(CClientBL, object):
         self.ConnectBtn.setEnabled(True)
         self.LoginBtn.setEnabled(False)
         self.PlayBtn.setEnabled(False)
-        # self.DrawBtn.setEnabled(False)
-        # self.WatchBtn.setEnabled(False)
+        self.DrawBtn.setEnabled(False)
+        self.WatchBtn.setEnabled(False)
         self.LeaveBtn.setEnabled(False)
         self.SendBtn.setEnabled(True)
 
@@ -190,9 +203,14 @@ class CClientGUI(CClientBL, object):
         self.LeaveBtn.clicked.connect(self.on_click_leave)
         self.SendBtn.clicked.connect(self.on_click_send)
 
-    # target functions for the buttons
+    # process gui updating queue
+    def process_gui_queue(self):
+        if self.gui_updates:
+            while not self.gui_updates.empty():
+                func, args, kwargs = self.gui_updates.get()
+                func(*args, **kwargs)
 
-    def update_field_target(self, text_queue, field):
+    def receive_update_target(self, text_queue, field):
         while True:
             text = text_queue.get()  # Get message from queue
             write_to_log(f'[ClientGUI] - update target - got from queue: {text}')
@@ -200,18 +218,31 @@ class CClientGUI(CClientBL, object):
                 return
             action, parsed_text = text.split(ACT_DELIMITER)
             if action == TEXT_ACTION:
-                field.appendPlainText(parsed_text)
+                # (append_plain_text, (self.my_field, message), {})
+                self.gui_updates.put((self.append_field, (self.ReceiveField, parsed_text), {}))
+                # field.appendPlainText(parsed_text)
             elif action == ROLE_ACTION:
-                if parsed_text == DRAW_ROLE:
-                    QtCore.QTimer.singleShot(0, lambda: self.DrawBtn.setEnabled(True))
-                    QtCore.QTimer.singleShot(0, lambda: field.appendPlainText('Time to draw!'))
-                elif parsed_text == GUESS_ROLE:
-                    QtCore.QTimer.singleShot(0, lambda: self.DrawBtn.setEnabled(False))
-                    QtCore.QTimer.singleShot(0, lambda: field.appendPlainText('Time to guess!'))
+                write_to_log(f'[ClientGUI] - update target - received role {parsed_text}')
+                print(f"[DEBUG] parsed_text: {repr(parsed_text)}, DRAW_ROLE: {repr(DRAW_ROLE)}")
+                if parsed_text == str(DRAW_ROLE):
+                    write_to_log(f'[ClientGUI] - update target - entered DRAWROLE if')
+                    # self.DrawBtn.setEnabled(True)
+                    self.gui_updates.put((self.set_ability, (self.DrawBtn, True), {}))
+                    # field.appendPlainText('Time to draw!')
+                    self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to draw!'), {}))
+                elif parsed_text == str(GUESS_ROLE):
+                    write_to_log(f'[ClientGUI] - update target - entered DRAWROLE elif')
+                    # self.DrawBtn.setEnabled(False)
+                    self.gui_updates.put((self.set_ability, (self.DrawBtn, False), {}))
+                    # field.appendPlainText('Time to guess!')
+                    self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to guess!'), {}))
+                    self.gui_updates.put((self.close_drawing, (), {}))
             elif action == WORD_ACTON:
-                field.appendPlainText(f'Your word to draw is: {parsed_text}')
+                # field.appendPlainText(f'Your word to draw is: {parsed_text}')
+                self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
             else:
-                field.appendPlainText(text)
+                # field.appendPlainText(text)
+                self.gui_updates.put((self.append_field, (self.ReceiveField, text), {}))
 
     def on_click_connect(self):
         ip = self.IPField.text()
@@ -224,13 +255,16 @@ class CClientGUI(CClientBL, object):
             self.ConnectBtn.setEnabled(False)
             self.LoginBtn.setEnabled(True)
             self.LeaveBtn.setEnabled(True)
-            #temporarily
             self.PlayBtn.setEnabled(True)
+            self.WatchBtn.setEnabled(True)
 
             self.run()  # run client bl
-            # receive field updating thread
-            self.update_field_thread = Thread(target=self.update_field_target, args=(self.text_queue, self.ReceiveField))
-            self.update_field_thread.start()
+            # queue for gui updates
+            self.gui_updates = SimpleQueue()
+            # receive updating thread
+            self.receive_update_thread = Thread(target=self.receive_update_target,
+                                              args=(self.text_queue, self.ReceiveField))
+            self.receive_update_thread.start()
 
         else:
             self.ReceiveField.appendPlainText("Failed to connect.")
@@ -272,6 +306,19 @@ class CClientGUI(CClientBL, object):
         """Handles the translation of UI elements."""
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Client"))
+
+    # ========= UI update functions ==========
+    def set_ability(self, button, value: bool):
+        write_to_log("[ClientGUI] - set ability -  called")
+        button.setEnabled(value)
+        write_to_log(f'[ClientGui] - set ability - button {button} is set {value} now')
+
+    def append_field(self, field, text: str):
+        field.appendPlainText(text)
+
+    def close_drawing(self):
+        if self.drawing_wnd:
+            self.drawing_wnd.close()
 
 
 # Run the application
