@@ -67,8 +67,6 @@ class CLoginGUI(QDialog):
         self.client.send_message(LOGIN_ACTION, (username, password))
         write_to_log(f"[Login GUI] - handle login - message sent")
 
-
-
     def handle_signup(self):
         print("Sign up button clicked")
         username = self.UsernameField.text()
@@ -82,6 +80,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     dialog = CLoginGUI()
     if dialog.exec_():
-        print("Login dialog accepted")
+        write_to_log("Login dialog accepted")
     else:
-        print("Login dialog cancelled")
+        write_to_log("Login dialog cancelled")

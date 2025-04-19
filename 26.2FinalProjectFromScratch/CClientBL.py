@@ -74,6 +74,7 @@ class CClientBL:
         while self._client_socket:  # Only run if the socket is valid
             try:
                 msg = self._client_socket.recv(1024).decode()
+                msg = msg.replace("\n", "")
                 self.text_queue.put(msg)
                 write_to_log(f'[ClientBL] - receive target - received and put into q: {msg}')
                 if not msg:  # If the server closes the connection

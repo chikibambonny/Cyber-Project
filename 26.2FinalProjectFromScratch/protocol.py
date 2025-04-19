@@ -39,7 +39,7 @@ def create_msg(action: str, data=""):
         else:
             msg = action   # + ACT_DELIMITER + data  # empty string after the delimiter for the PLAY comand
         write_to_log(f"[Protocol] - create msg - message created: {msg}")
-        return msg
+        return msg+"\n"
     else:
         write_to_log(f"[Protocol] - create msg - unsupported action: {action}")
 

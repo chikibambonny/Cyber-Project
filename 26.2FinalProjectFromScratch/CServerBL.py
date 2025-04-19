@@ -208,6 +208,7 @@ class Server:
                 write_to_log(f'[ServerBL] - text action - BROADCASTED client: {client.login}, data: {msg.data[0]}')
                 if self.current_word:
                     write_to_log(f'[ServerBL] - text action - current word exists')
+                    print(f"[DEBUG] msg.data: {repr(msg.data)}, curr word: {repr(self.current_word)}")
                     if msg.data == self.current_word:
                         write_to_log(f'[ServerBL] - received words matches the current word')
                         write_to_log(f'[ServerBL] - text action - the word was guessed: {self.current_word}')

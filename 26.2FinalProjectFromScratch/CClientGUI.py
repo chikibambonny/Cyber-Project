@@ -218,30 +218,18 @@ class CClientGUI(CClientBL, object):
                 return
             action, parsed_text = text.split(ACT_DELIMITER)
             if action == TEXT_ACTION:
-                # (append_plain_text, (self.my_field, message), {})
                 self.gui_updates.put((self.append_field, (self.ReceiveField, parsed_text), {}))
-                # field.appendPlainText(parsed_text)
             elif action == ROLE_ACTION:
-                write_to_log(f'[ClientGUI] - update target - received role {parsed_text}')
-                print(f"[DEBUG] parsed_text: {repr(parsed_text)}, DRAW_ROLE: {repr(DRAW_ROLE)}")
                 if parsed_text == str(DRAW_ROLE):
-                    write_to_log(f'[ClientGUI] - update target - entered DRAWROLE if')
-                    # self.DrawBtn.setEnabled(True)
                     self.gui_updates.put((self.set_ability, (self.DrawBtn, True), {}))
-                    # field.appendPlainText('Time to draw!')
                     self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to draw!'), {}))
                 elif parsed_text == str(GUESS_ROLE):
-                    write_to_log(f'[ClientGUI] - update target - entered DRAWROLE elif')
-                    # self.DrawBtn.setEnabled(False)
                     self.gui_updates.put((self.set_ability, (self.DrawBtn, False), {}))
-                    # field.appendPlainText('Time to guess!')
                     self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to guess!'), {}))
                     self.gui_updates.put((self.close_drawing, (), {}))
             elif action == WORD_ACTON:
-                # field.appendPlainText(f'Your word to draw is: {parsed_text}')
                 self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
             else:
-                # field.appendPlainText(text)
                 self.gui_updates.put((self.append_field, (self.ReceiveField, text), {}))
 
     def on_click_connect(self):
@@ -282,9 +270,9 @@ class CClientGUI(CClientBL, object):
         # self.SendBtn.setEnabled(True)
         self.login_wnd = CLoginGUI(self)
         if self.login_wnd.exec_():  # Show the dialog and wait for it to close
-            print("Login successful")
+            write_to_log("Login window used")
         else:
-            print("Login canceled")
+            write_to_log("Login canceled")
 
     def on_click_play(self):
         write_to_log(f'[ClientGUI] - play button clicked')
@@ -309,9 +297,7 @@ class CClientGUI(CClientBL, object):
 
     # ========= UI update functions ==========
     def set_ability(self, button, value: bool):
-        write_to_log("[ClientGUI] - set ability -  called")
         button.setEnabled(value)
-        write_to_log(f'[ClientGui] - set ability - button {button} is set {value} now')
 
     def append_field(self, field, text: str):
         field.appendPlainText(text)
