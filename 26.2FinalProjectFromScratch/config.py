@@ -2,7 +2,7 @@
 
 SERVER_HOST: str = "127.0.0.1"
 PORT: int = 1113
-BUFFER_SIZE: int = 1024
+BUFFER_SIZE: int = 16384
 HEADER: str = "04d"
 FORMAT: str = 'utf-8'
 DISCONNECT_MSG: str = "EXIT"
@@ -22,6 +22,7 @@ LOGIN_ACTION = "LOGIN"
 SIGNUP_ACTION = "SIGNUP"
 TEXT_ACTION = "TEXT"  # REGULAR TEXT MESSAGE TO BE BROADCASTED
 LOGOUT_ACTION = "LOGOUT"
+IMAGE_ACTION = "IMAGE"
 
 # gameplay
 ROLE_ACTION = "ROLE"  # Command for assigning roles
@@ -30,7 +31,7 @@ GUESS_ACTION = "GUESS"  # Command for submitting a guess
 PLAY_ACTION = "PLAY"  # Command for stopping accepting connections and starting a new game
 
 ACTIONS = [EXIT_ACTION, WELCOME_ACTION, CONNECTION_ACTION, LOGIN_ACTION, SIGNUP_ACTION, TEXT_ACTION, LOGOUT_ACTION,
-           ROLE_ACTION, WORD_ACTON, GUESS_ACTION, PLAY_ACTION
+           IMAGE_ACTION, ROLE_ACTION, WORD_ACTON, GUESS_ACTION, PLAY_ACTION
            ]
 
 # roles
@@ -43,15 +44,12 @@ ANON_NAME = "Anonymous"
 # =========== WORDS ===========
 WORDS_BANK = "words.txt"
 
-
 # =========== DATABASE ===========
 DATABASE_PATH = "users.db"
-
 
 # =========== UI ===========
 CLIENT_UI = './PYQTDesignerStuff/ClientUI.ui'
 CAST_IMG_PATH = "saved_drawings/drawing_20250325_221158.png"
-
 
 # =========== STYLES ===========
 # palette swatches https://coolors.co/f5bd4c-fbf6e3-543e12-ec9146-f4ccc2-7d8458-ffffff-b84169-be5277-c46283
@@ -118,6 +116,3 @@ def set_designs(buttons: list, fields: list, labels: list):
         field.setStyleSheet(field_style)
     for label in labels:
         label.setStyleSheet(label_style)
-
-
-

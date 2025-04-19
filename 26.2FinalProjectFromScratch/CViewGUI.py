@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
+import base64
+
 from protocol import *
 from config import *
 from CClientBL import *
@@ -35,7 +37,14 @@ class CViewGUI(CClientBL, QWidget):
         self.layout.addWidget(self.image_label, 0, Qt.AlignCenter)
 
         # Load your translated image
-        self.load_translated_image(CAST_IMG_PATH)
+        # self.load_translated_image(CAST_IMG_PATH)
+
+    def update_image_from_base64(self, img_b64):
+        img_bytes = base64.b64decode(img_b64)
+        image = QtGui.QImage.fromData(img_bytes)
+        pixmap = QtGui.QPixmap.fromImage(image)
+        scaled = pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image_label.setPixmap(scaled)
 
     def load_translated_image(self, image_path):
         """Load image with specific display constraints"""

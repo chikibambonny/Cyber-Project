@@ -232,6 +232,13 @@ class CClientGUI(CClientBL, object):
                     write_to_log(f'[ClientGUI] - update target - role updates ran')
             elif action == WORD_ACTON:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
+            elif action == IMAGE_ACTION:
+                if self.view_wnd:
+                    write_to_log(f'[ClientGUI] - update target - image put into gui queue')
+                    self.gui_updates.put((self.view_wnd.update_image_from_base64, (parsed_text[0],), {}))
+                else:
+                    self.gui_updates.put((self.append_field, (self.ReceiveField, 'Open the view window to see the '
+                                                                                 'drawing'), {}))
             else:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, text), {}))
 
@@ -282,7 +289,7 @@ class CClientGUI(CClientBL, object):
         self.send_message(PLAY_ACTION, 'play')  # it doesnt cae about play data anyways, but exit command gets triggered by empty data
 
     def on_click_draw(self):
-        self.drawing_wnd = CDrawingGUI()
+        self.drawing_wnd = CDrawingGUI(self)
         self.drawing_wnd.show()
 
     def on_click_watch(self):

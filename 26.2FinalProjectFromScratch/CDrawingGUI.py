@@ -1,10 +1,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QColor, QPainter, QPen, QPixmap
 from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import QBuffer, QByteArray
 
 import os
+import sys
 from datetime import datetime
 from PyQt5.QtCore import QTimer
+import base64
 
 from protocol import *
 from config import *
@@ -51,7 +54,6 @@ class DrawingCanvas(QtWidgets.QFrame):
             self.last_point = current_point
             self.update()
             self.has_unsaved_changes = True
-            write_to_log(f'[DrawingGUI] - mouse moved has changes - {self.has_unsaved_changes}')
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -62,8 +64,6 @@ class DrawingCanvas(QtWidgets.QFrame):
         self.update()
         if not self.is_canvas_blank():  # Only mark changes if actually clearing
             self.has_unsaved_changes = True
-            write_to_log(f'[DrawingGUI] - clear canvas has changes - {self.has_unsaved_changes}')
-
     def resizeEvent(self, event):
         # Create new pixmaps with the new size
         new_pixmap = QPixmap(event.size())  # For the drawing canvas
@@ -101,14 +101,15 @@ class DrawingCanvas(QtWidgets.QFrame):
         self.has_unsaved_changes = False
         return filename
 
-
-class CDrawingGUI(CClientBL, QtWidgets.QWidget):
-    def __init__(self):
+# class CDrawingGUI(CClientBL, QtWidgets.QWidget):
+class CDrawingGUI(QtWidgets.QWidget):
+    def __init__(self, cgui):
         # Initialize QWidget first (the graphical base)
         QtWidgets.QWidget.__init__(self)
         # Then initialize CClientBL
-        CClientBL.__init__(self)
+        # CClientBL.__init__(self)
 
+        self.cgui=cgui
         # Drawing attributes
         self.eraser_mode = False
 
@@ -127,7 +128,13 @@ class CDrawingGUI(CClientBL, QtWidgets.QWidget):
         self.ClearBtn = None
 
         self.setupUi(self)
-        self.setup_autosave()
+        # self.setup_autosave()
+        self.setup_autosend()
+
+    def setup_autosend(self):
+        self.image_send_timer = QtCore.QTimer()
+        self.image_send_timer.timeout.connect(self.send_drawing_to_server)
+        self.image_send_timer.start(3*1000)
 
     def setup_autosave(self):
         self.autosave_timer = QTimer()
@@ -138,6 +145,40 @@ class CDrawingGUI(CClientBL, QtWidgets.QWidget):
     def autosave_drawing(self):
         filename = self.frameCanvas.save_drawing()
         write_to_log(f"Auto-saved drawing to: {filename}")  # Optional logging
+
+    def send_drawing_to_server(self):
+        # Step 1: Get the current canvas as a QImage and scale it down to reduce size
+        image = self.frameCanvas.canvas.toImage().scaled(
+            200, 200,  # Resize to 200x200 pixels for smaller size
+            QtCore.Qt.KeepAspectRatio  # Keep aspect ratio to avoid distortion
+        )
+
+        # Step 2: Prepare a buffer to hold compressed image data (like a memory file)
+        buffer = QBuffer()
+        buffer.open(QBuffer.ReadWrite)
+        write_to_log(f'[DrawingGUI] - send drawing - buffer opened')
+
+        # Step 3: Save the image into the buffer using JPEG format (smaller than PNG)
+        image.save(buffer, "JPEG", quality=40)  # Lower quality (0–100) = smaller file size
+        write_to_log(f'[DrawingGUI] - send drawing - imaged loaded into the buffer')
+
+        # Step 4: Extract the raw bytes from the buffer
+        img_bytes = buffer.data()
+
+        # Step 5: Encode the image bytes to a base64 string (safe for sending as text)
+        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
+        write_to_log(f'[DrawingGUI] - send drawing - converted to base64 string')
+
+        # Step 6: Send the image data to the server using your existing message protocol
+        print('hello')
+        print('hello')
+        print('hello')
+        print(f'[DrawingGUI] - {self.cgui.send_message=}')
+        print('hello')
+        print('hello')
+        print('hello')
+        self.cgui.send_message(IMAGE_ACTION, img_b64)
+        write_to_log(f'[DrawingGUI] - send drawing - sent')
 
     def setupUi(self, Form):
         Form.setObjectName("Drawing")
@@ -255,8 +296,6 @@ background-color: {BUTTONS};
 
 
 if __name__ == "__main__":
-    import sys
-
     app = QtWidgets.QApplication(sys.argv)
     window = CDrawingGUI()
     window.show()

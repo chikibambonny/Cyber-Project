@@ -46,13 +46,20 @@ class CClientBL:
             write_to_log("[CClientBL] - run - no client socket")
 
     def send_message(self, action: str, data=None):
-        write_to_log(f'[ClientBL] - message received for sending: {action}; {data}')
+        # write_to_log(f'[ClientBL] - message received for sending: {action}; {data}')
         msg = create_msg(action, data)
+        write_to_log(f'[ClientBL] - send message - message created: {action}')
+        write_to_log(f'[ClientBL] - send message - socket: {self._client_socket}')
         if self._client_socket:
+            write_to_log(f'[ClientBL] - send message - if client socket')
             try:
-                with self.lock:  # Acquire the lock
-                    self._client_socket.sendall(msg.encode())
-                    write_to_log(f'[ClientBL] - message sent: {action}; {data}')
+                write_to_log(f'[ClientBL] - send message - before sending message: {action}')
+                self._client_socket.sendall(msg.encode())
+                write_to_log(f'[ClientBL] - send message - message sent: {action}')
+                # with self.lock:  # Acquire the lock
+                    # self._client_socket.sendall(msg.encode())
+                    # write_to_log(f'[ClientBL] - message sent: {action}')
+                    #write_to_log(f'[ClientBL] - message sent: {action}; {data}')
                 # self._client_socket.sendall(msg.encode())
                 # write_to_log(f'[ClientBL] - message sent: {action}; {data}')
             except Exception as e:
@@ -71,18 +78,24 @@ class CClientBL:
                     return False
 
     def receive_target(self):
-        while self._client_socket:  # Only run if the socket is valid
+        buffer = ""
+        while self._client_socket:
             try:
-                msg = self._client_socket.recv(1024).decode()
-                msg = msg.replace("\n", "")
-                self.text_queue.put(msg)
-                write_to_log(f'[ClientBL] - receive target - received and put into q: {msg}')
-                if not msg:  # If the server closes the connection
-                    write_to_log("[ClientBL] - Server disconnected.")
+                data = self._client_socket.recv(16384).decode()
+                if not data:
                     break
-                # print(f"Server: {msg}")
+
+                buffer += data  # Add received chunk to the buffer
+
+                # Process all complete messages (ending with \n)
+                while "\n" in buffer:
+                    message, buffer = buffer.split("\n", 1)
+                    message = message.strip()
+                    if message:
+                        self.text_queue.put(message)
+                        write_to_log(f'[ClientBL] - receive target - received and put into q: {message}')
             except Exception as e:
-                write_to_log(f"[ClientBL] - receive target - Error receiving message: {e}")
+                write_to_log(f"[ClientBL] - receive target - ERROR: {e}")
                 break
 
     def send_target(self):

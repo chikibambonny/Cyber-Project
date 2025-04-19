@@ -51,7 +51,7 @@ class Server:
     def clientin(self, client):
         while True:
             try:
-                msg = client.connection.recv(1024).decode()
+                msg = client.connection.recv(BUFFER_SIZE).decode()
                 write_to_log(f'[ServerBL] - clientin - received msg: {msg}')
                 if not msg:
                    break
@@ -222,9 +222,15 @@ class Server:
                             self.broadcast(self.connected['root'][0],
                                            f'{self.guessed} guessed the word {self.current_word}')
                             self.send_roles()
-
                 else:
                     write_to_log(f'[ServerBL] - text action - current word doesnt exist')
+
+            elif msg.action == IMAGE_ACTION:
+                write_to_log('[ServerBL] - msg action - IMAGE')
+                for client, _ in self.connected.values():
+                    #if client != msg.sender:
+                    client.qout.put(Message(IMAGE_ACTION, self.connected['root'], msg.data))
+                    write_to_log('[ServerBL] - msg action - image broadcasted  ')
 
             elif msg.action == EXIT_ACTION:
                 client = msg.sender
