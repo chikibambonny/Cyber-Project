@@ -220,13 +220,16 @@ class CClientGUI(CClientBL, object):
             if action == TEXT_ACTION:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, parsed_text), {}))
             elif action == ROLE_ACTION:
+                write_to_log(f'[ClientGUI] - update target - Role :{repr(parsed_text), repr(str(DRAW_ROLE))}')
                 if parsed_text == str(DRAW_ROLE):
                     self.gui_updates.put((self.set_ability, (self.DrawBtn, True), {}))
                     self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to draw!'), {}))
+                    write_to_log(f'[ClientGUI] - update target - role updates ran')
                 elif parsed_text == str(GUESS_ROLE):
                     self.gui_updates.put((self.set_ability, (self.DrawBtn, False), {}))
                     self.gui_updates.put((self.append_field, (self.ReceiveField, 'Time to guess!'), {}))
                     self.gui_updates.put((self.close_drawing, (), {}))
+                    write_to_log(f'[ClientGUI] - update target - role updates ran')
             elif action == WORD_ACTON:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
             else:

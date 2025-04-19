@@ -88,9 +88,9 @@ class Server:
         write_to_log(f'[ServerBL] - broadcast - broadcasting : {msg}')
         for connection, role in self.connected.values():
             if connection != client and connection.login != 'root':
-                connection.qout.put(Message(TEXT_ACTION, self.connected['root'], msg))
+                connection.qout.put(Message(TEXT_ACTION, self.connected['root'][0], msg))
         spec_msg = msg = client.login + ' (You): ' + word
-        client.qout.put(Message(TEXT_ACTION, self.connected['root'], spec_msg))
+        client.qout.put(Message(TEXT_ACTION, self.connected['root'][0], spec_msg))
         write_to_log(f'[ServerBL] - broadcast - broadcasted : {msg}')
 
     def get_random_word(self):
@@ -128,7 +128,7 @@ class Server:
             write_to_log(f"[ServerBL] - send roles- broadcasted who's drawing")
             self.current_word = self.get_random_word()
             write_to_log(f'[ServerBL] - send roles- the word is {self.current_word}')
-            self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.connected['root'], self.current_word))
+            self.connected[artist_login][0].qout.put(Message(WORD_ACTON, self.connected['root'][0], self.current_word))
             write_to_log(f'[ServerBL] - send roles- the word is sent to the artist')
         else:
             self.broadcast(self.connected['root'][0], 'not enough users to choose roles')
@@ -174,10 +174,11 @@ class Server:
                         del self.connected[client.login]  # remove the anonymous connection of the same user
                         client.login = username
                         self.connected[username] = (client, GUESS_ROLE)
-                        client.qout.put(Message(TEXT_ACTION, message))
+                        # client.qout.put(Message(TEXT_ACTION, message))
                     else:
                         write_to_log(f'[Server] - login - not validated')
-                        client.qout.put(Message(TEXT_ACTION, message))
+                        # client.qout.put(Message(TEXT_ACTION, message))
+                client.qout.put(Message(TEXT_ACTION, self.connected['root'][0], message))
 
             elif msg.action == SIGNUP_ACTION:
                 client = msg.sender
@@ -191,10 +192,11 @@ class Server:
                     write_to_log(f'[Server] - signup - success')
                     client.login = username
                     self.connected[username] = (client, GUESS_ROLE)
-                    client.qout.put(Message(TEXT_ACTION, message))
+                    # client.qout.put(Message(TEXT_ACTION, message))
                 else:
                     write_to_log(f'[Server] - signup - unsuccessful')
-                    client.qout.put(Message(TEXT_ACTION, message))
+                    # client.qout.put(Message(TEXT_ACTION, message))
+                client.qout.put(Message(TEXT_ACTION, self.connected['root'][0], message))
 
             elif msg.action == PLAY_ACTION:
                 write_to_log(f'[ServerBL] - play action - play received')
@@ -209,12 +211,18 @@ class Server:
                 if self.current_word:
                     write_to_log(f'[ServerBL] - text action - current word exists')
                     print(f"[DEBUG] msg.data: {repr(msg.data)}, curr word: {repr(self.current_word)}")
-                    if msg.data == self.current_word:
-                        write_to_log(f'[ServerBL] - received words matches the current word')
-                        write_to_log(f'[ServerBL] - text action - the word was guessed: {self.current_word}')
-                        self.guessed = client.login
-                        self.broadcast(self.connected['root'][0], f'{self.guessed} guessed the word {self.current_word}')
-                        self.send_roles()
+                    if msg.data[0] == self.current_word:
+                        if client.login == self.guessed:
+                            client.qout.put(
+                                Message(TEXT_ACTION, self.connected['root'][0], "Please keep the word a secret"))
+                        else:
+                            write_to_log(f'[ServerBL] - received words matches the current word')
+                            write_to_log(f'[ServerBL] - text action - the word was guessed: {self.current_word}')
+                            self.guessed = client.login
+                            self.broadcast(self.connected['root'][0],
+                                           f'{self.guessed} guessed the word {self.current_word}')
+                            self.send_roles()
+
                 else:
                     write_to_log(f'[ServerBL] - text action - current word doesnt exist')
 

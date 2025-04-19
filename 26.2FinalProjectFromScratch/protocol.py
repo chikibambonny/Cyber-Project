@@ -46,6 +46,7 @@ def create_msg(action: str, data=""):
 
 def parse_msg(msg: str):
     # split msg to action and data
+    msg = msg.replace("\n", "")
     split_msg = msg.split(ACT_DELIMITER)
     # get the action
     action = split_msg[0]
