@@ -233,12 +233,9 @@ class CClientGUI(CClientBL, object):
             elif action == WORD_ACTON:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
             elif action == IMAGE_ACTION:
-                if self.view_wnd:
-                    write_to_log(f'[ClientGUI] - update target - image put into gui queue')
-                    self.gui_updates.put((self.view_wnd.update_image_from_base64, (parsed_text[0],), {}))
-                else:
-                    self.gui_updates.put((self.append_field, (self.ReceiveField, 'Open the view window to see the '
-                                                                                 'drawing'), {}))
+                write_to_log(f'[ClientGUI] - update target - image action')
+                self.gui_updates.put((self.ensure_view_window_and_show_image, (parsed_text,), {}))
+                write_to_log('[ClientGUI] - update target - image put into gui queue')
             else:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, text), {}))
 
@@ -315,6 +312,12 @@ class CClientGUI(CClientBL, object):
     def close_drawing(self):
         if self.drawing_wnd:
             self.drawing_wnd.close()
+
+    def ensure_view_window_and_show_image(self, image_b64):
+        if not self.view_wnd:
+            self.view_wnd = CViewGUI()
+            self.view_wnd.show()
+        self.view_wnd.update_image_from_base64(image_b64)
 
 
 # Run the application
