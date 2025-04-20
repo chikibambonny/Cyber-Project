@@ -311,10 +311,11 @@ class CClientGUI(CClientBL, object):
 
     def close_drawing(self):
         if self.drawing_wnd:
-            self.drawing_wnd.close()
+            self.drawing_wnd.shutdown()
+            self.drawing_wnd = None
 
     def ensure_view_window_and_show_image(self, image_b64):
-        if not self.view_wnd:
+        if not self.view_wnd or not self.view_wnd.isVisible():
             self.view_wnd = CViewGUI()
             self.view_wnd.show()
         self.view_wnd.update_image_from_base64(image_b64)

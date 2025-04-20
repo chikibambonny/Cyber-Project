@@ -127,6 +127,8 @@ class CDrawingGUI(QtWidgets.QWidget):
         self.EraserBtn = None
         self.ClearBtn = None
 
+        self.image_send_timer = None
+
         self.setupUi(self)
         # self.setup_autosave()
         self.setup_autosend()
@@ -148,10 +150,11 @@ class CDrawingGUI(QtWidgets.QWidget):
 
     def send_drawing_to_server(self):
         # Step 1: Get the current canvas as a QImage and scale it down to reduce size
-        image = self.frameCanvas.canvas.toImage().scaled(
-            200, 200,  # Resize to 200x200 pixels for smaller size
-            QtCore.Qt.KeepAspectRatio  # Keep aspect ratio to avoid distortion
-        )
+        image = self.frameCanvas.canvas.toImage() #.scaled(
+            # 200, 200,  # Resize to 200x200 pixels for smaller size
+            # QtCore.Qt.KeepAspectRatio  # Keep aspect ratio to avoid distortion
+        #)
+        image = image.scaled(300, 225, Qt.KeepAspectRatio)
 
         # Step 2: Prepare a buffer to hold compressed image data (like a memory file)
         buffer = QBuffer()
@@ -159,7 +162,7 @@ class CDrawingGUI(QtWidgets.QWidget):
         write_to_log(f'[DrawingGUI] - send drawing - buffer opened')
 
         # Step 3: Save the image into the buffer using JPEG format (smaller than PNG)
-        image.save(buffer, "JPEG", quality=40)  # Lower quality (0–100) = smaller file size
+        image.save(buffer, "JPEG", quality=70)  # Lower quality (0–100) = smaller file size
         write_to_log(f'[DrawingGUI] - send drawing - imaged loaded into the buffer')
 
         # Step 4: Extract the raw bytes from the buffer
@@ -170,15 +173,18 @@ class CDrawingGUI(QtWidgets.QWidget):
         write_to_log(f'[DrawingGUI] - send drawing - converted to base64 string')
 
         # Step 6: Send the image data to the server using your existing message protocol
-        print('hello')
-        print('hello')
-        print('hello')
-        print(f'[DrawingGUI] - {self.cgui.send_message=}')
-        print('hello')
-        print('hello')
-        print('hello')
         self.cgui.send_message(IMAGE_ACTION, img_b64)
         write_to_log(f'[DrawingGUI] - send drawing - sent')
+
+    def shutdown(self):
+        try:
+            self.image_send_timer.stop()
+            print("[DrawGUI] Timer stopped.")
+        except Exception as e:
+            print(f"[DrawGUI] Error stopping timer: {e}")
+
+        self.close()
+        self.deleteLater()
 
     def setupUi(self, Form):
         Form.setObjectName("Drawing")

@@ -40,11 +40,25 @@ class CViewGUI(CClientBL, QWidget):
         # self.load_translated_image(CAST_IMG_PATH)
 
     def update_image_from_base64(self, img_b64):
-        img_bytes = base64.b64decode(img_b64)
-        image = QtGui.QImage.fromData(img_bytes)
-        pixmap = QtGui.QPixmap.fromImage(image)
-        scaled = pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.image_label.setPixmap(scaled)
+        try:
+            # Ensure proper base64 padding
+            missing_padding = len(img_b64) % 4
+            if missing_padding:
+                img_b64 += "=" * (4 - missing_padding)
+
+            img_bytes = base64.b64decode(img_b64)
+            image = QtGui.QImage.fromData(img_bytes)
+
+            if image.isNull():
+                print("[ViewGUI] Received invalid image data")
+                return  # Don't crash — just ignore
+
+            pixmap = QtGui.QPixmap.fromImage(image)
+            scaled = pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled)
+
+        except Exception as e:
+            print(f"[ViewGUI] Failed to update image: {e}")
 
     def load_translated_image(self, image_path):
         """Load image with specific display constraints"""
