@@ -10,6 +10,7 @@ class CClientBL:
         # self._port = PORT
         self._client_socket = None
         self.login = None
+        self.crypto = CryptoProtocol()
         self.lock = Lock()  # Add a lock for thread safety
         self.text_queue = SimpleQueue()  # queue for updating the receive
 
@@ -18,6 +19,13 @@ class CClientBL:
             self._client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._client_socket.connect((host, port))
             write_to_log(f"[CLIENT_BL] {self._client_socket.getsockname()} connected")
+            # Receive server's public key (PEM format)
+            server_public_key_pem = self._client_socket.recv(2048)
+            # Generate AES key and encrypt it with server's public key
+            encrypted_key = self.crypto.encrypt_symmetric_key(server_public_key_pem)
+            # Send the encrypted AES key to the server
+            self._client_socket.sendall(encrypted_key)
+
             return self._client_socket
 
         except Exception as e:
@@ -54,7 +62,10 @@ class CClientBL:
             write_to_log(f'[ClientBL] - send message - if client socket')
             try:
                 write_to_log(f'[ClientBL] - send message - before sending message: {action}')
-                self._client_socket.sendall(msg.encode())
+                # self._client_socket.sendall(msg.encode())
+                encrypted = self.crypto.encrypt(msg.encode())
+                self._client_socket.sendall(encrypted)
+
                 write_to_log(f'[ClientBL] - send message - message sent: {action}')
                 # with self.lock:  # Acquire the lock
                     # self._client_socket.sendall(msg.encode())
@@ -81,7 +92,10 @@ class CClientBL:
         buffer = ""
         while self._client_socket:
             try:
-                data = self._client_socket.recv(16384).decode()
+                # data = self._client_socket.recv(16384).decode()
+                encrypted = self._client_socket.recv(BUFFER_SIZE)
+                data = self.crypto.decrypt(encrypted).decode()
+
                 if not data:
                     break
 

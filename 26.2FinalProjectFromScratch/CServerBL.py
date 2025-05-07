@@ -12,6 +12,7 @@ class ClientConnection:
     def __init__(self, connection, address, login: str = ANON_NAME, num: int = 0):
         self.connection = connection  # Client socket
         self.address = address  # Client address
+        self.crypto = CryptoProtocol()
         # self.login = login  # Client login name
         self.qin = SimpleQueue()  # Queue for incoming messages
         self.qout = SimpleQueue()  # Queue for outgoing messages
@@ -51,7 +52,10 @@ class Server:
     def clientin(self, client):
         while True:
             try:
-                msg = client.connection.recv(BUFFER_SIZE).decode()
+                # msg = client.connection.recv(BUFFER_SIZE).decode()
+                encrypted = client.connection.recv(BUFFER_SIZE)
+                msg = client.crypto.decrypt(encrypted).decode()
+
                 write_to_log(f'[ServerBL] - clientin - received msg: {msg}')
                 if not msg:
                    break
@@ -73,7 +77,9 @@ class Server:
                 break
             elif m.data:
                 send = create_msg(m.action, m.data)
-                client.connection.send(send.encode())
+                #client.connection.send(send.encode())
+                encrypted = client.crypto.encrypt(send.encode())
+                client.connection.send(encrypted)
 
     def validate(self, login):
         # if login not in self.users:
@@ -143,9 +149,10 @@ class Server:
             msg = self.super_queue.get()
             write_to_log(f'[Server] - current message: {msg.action} {msg.data}')
             if msg.action == CONNECTION_ACTION:
-                connection, address = msg.data
+                connection, address, temp_crypto = msg.data
                 write_to_log(f"[Server] - connection action - connection, address  retrieved, current anon_count is {self.count_anon} ")
                 client = ClientConnection(connection, address, ANON_NAME, self.count_anon)  # create anonymous connection
+                client.crypto = temp_crypto
                 write_to_log(f"[Server] - connection action - ClientConnection created for: {client.login}")
                 self.connected[client.login] = (client, GUESS_ROLE)  # at the beginning all the players are guessers
                 self.count_anon += 1  # increase the count
@@ -261,8 +268,23 @@ class Server:
         server_thread.start()
 
         while True:
+            # connection, address = self.sock.accept()
+            # self.super_queue.put(Message(CONNECTION_ACTION, self.connected['root'], (connection, address)))
             connection, address = self.sock.accept()
-            self.super_queue.put(Message(CONNECTION_ACTION, self.connected['root'], (connection, address)))
+
+            # Temporary protocol object to handle the key exchange
+            temp_crypto = CryptoProtocol()
+
+            # 1. Generate RSA keys and send public key to client
+            public_key_pem = temp_crypto.generate_rsa_keys()
+            connection.sendall(public_key_pem)
+
+            # 2. Receive encrypted AES key from client
+            encrypted_key = connection.recv(512)
+
+            # 3. Decrypt AES key
+            temp_crypto.decrypt_symmetric_key(encrypted_key)
+            self.super_queue.put(Message(CONNECTION_ACTION, self.connected['root'], (connection, address, temp_crypto)))
 
 
 # Main function to initialize and run the server
