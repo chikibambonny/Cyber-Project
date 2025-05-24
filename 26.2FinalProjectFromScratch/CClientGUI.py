@@ -7,6 +7,7 @@ from CClientBL import *
 from CDrawingGUI import CDrawingGUI
 from CViewGUI import CViewGUI
 from CLoginGUI import CLoginGUI
+from CRulesGUI import CRulesGUI
 from Protocol import *
 from config import *
 from queue import SimpleQueue
@@ -22,6 +23,7 @@ class CClientGUI(CClientBL, object):
 
         self.view_wnd = None
         self.drawing_wnd = None
+        self.rules_wnd = None
 
         # fields
         self.IPField = None
@@ -36,6 +38,7 @@ class CClientGUI(CClientBL, object):
         self.PlayBtn = None
         self.DrawBtn = None
         self.WatchBtn = None
+        self.RulesBtn = None
         self.LeaveBtn = None
         # labels
         self.IPLabel = None
@@ -128,9 +131,9 @@ class CClientGUI(CClientBL, object):
         self.verticalLayout_2.addWidget(self.Sendlabel)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
 
-        # --- LAYOUT 1 (Buttons) --- (Moved right, increased size)
+        # LAYOUT 1 (Buttons) Moved right, increased size
         self.verticalLayoutWidget = QtWidgets.QWidget(self.centralwidget)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(620, 300, 260, 160))  # Adjusted position & size
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(620, 200, 260, 160))  # Adjusted position & size
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
 
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
@@ -141,6 +144,7 @@ class CClientGUI(CClientBL, object):
         self.PlayBtn = QtWidgets.QPushButton(" Play ", self.verticalLayoutWidget)
         self.DrawBtn = QtWidgets.QPushButton(" Draw ", self.verticalLayoutWidget)
         self.WatchBtn = QtWidgets.QPushButton(" Watch ", self.verticalLayoutWidget)
+        self.RulesBtn = QtWidgets.QPushButton(" Rules ", self.verticalLayoutWidget)
         self.LeaveBtn = QtWidgets.QPushButton(" Leave ", self.verticalLayoutWidget)
 
         # Add buttons to layout
@@ -153,6 +157,7 @@ class CClientGUI(CClientBL, object):
         self.horizontalLayout.addWidget(self.WatchBtn)
 
         self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout.addWidget(self.RulesBtn)
         self.verticalLayout.addWidget(self.LeaveBtn)
 
         # Finalize main window setup
@@ -166,7 +171,7 @@ class CClientGUI(CClientBL, object):
         # List of all buttons
         buttons = [
             self.ConnectBtn, self.LoginBtn, self.PlayBtn, self.DrawBtn,
-            self.WatchBtn, self.LeaveBtn, self.SendBtn
+            self.WatchBtn, self.RulesBtn, self.LeaveBtn, self.SendBtn
         ]
         # List of all input fields
         input_fields = [
@@ -200,6 +205,7 @@ class CClientGUI(CClientBL, object):
         self.PlayBtn.clicked.connect(self.on_click_play)
         self.DrawBtn.clicked.connect(self.on_click_draw)
         self.WatchBtn.clicked.connect(self.on_click_watch)
+        self.RulesBtn.clicked.connect(self.on_click_rules)
         self.LeaveBtn.clicked.connect(self.on_click_leave)
         self.SendBtn.clicked.connect(self.on_click_send)
 
@@ -292,6 +298,10 @@ class CClientGUI(CClientBL, object):
     def on_click_watch(self):
         self.view_wnd = CViewGUI()
         self.view_wnd.show()
+
+    def on_click_rules(self):
+        self.rules_wnd = CRulesGUI()
+        self.rules_wnd.show()
 
     def on_click_leave(self):
         self.send_message(EXIT_ACTION)
