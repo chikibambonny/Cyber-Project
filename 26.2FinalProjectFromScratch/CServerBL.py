@@ -223,7 +223,7 @@ class Server:
                 self.broadcast(client, msg.data[0])
                 write_to_log(f'[ServerBL] - text action - BROADCASTED client: {client.login}, data: {msg.data[0]}')
                 if self.current_word:
-                    # print(f"[DEBUG] msg.data: {repr(msg.data[0].lower())}, curr word: {repr(self.current_word.lower())}")
+                    # print(f'[DEBUG] msg.data: {repr(msg.data[0].lower())}, curr word: {repr(self.current_word.lower())}')
                     if msg.data[0].lower() == self.current_word.lower():
                         if client.login == self.guessed:
                             client.qout.put(
