@@ -9,7 +9,7 @@ from datetime import datetime
 from PyQt5.QtCore import QTimer
 import base64
 
-from protocol import *
+from Protocol import *
 from config import *
 from CClientBL import *
 

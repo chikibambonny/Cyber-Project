@@ -25,13 +25,14 @@ LOGOUT_ACTION = "LOGOUT"
 IMAGE_ACTION = "IMAGE"
 
 # gameplay
+DICT_ACTION = "DICTIONARY"
 ROLE_ACTION = "ROLE"  # Command for assigning roles
 WORD_ACTON = "WORD"  # Command for sending the drawing word
 GUESS_ACTION = "GUESS"  # Command for submitting a guess
 PLAY_ACTION = "PLAY"  # Command for stopping accepting connections and starting a new game
 
 ACTIONS = [EXIT_ACTION, WELCOME_ACTION, CONNECTION_ACTION, LOGIN_ACTION, SIGNUP_ACTION, TEXT_ACTION, LOGOUT_ACTION,
-           IMAGE_ACTION, ROLE_ACTION, WORD_ACTON, GUESS_ACTION, PLAY_ACTION
+           IMAGE_ACTION, DICT_ACTION, ROLE_ACTION, WORD_ACTON, GUESS_ACTION, PLAY_ACTION
            ]
 
 # roles
@@ -42,7 +43,8 @@ GUESS_ROLE = False
 ANON_NAME = "Anonymous"
 
 # =========== WORDS ===========
-WORDS_BANK = "words.txt"
+# DICTIONARIES = {}
+WORDS_BANK = "Dictionaries/English.txt"
 
 # =========== DATABASE ===========
 DATABASE_PATH = "users.db"
