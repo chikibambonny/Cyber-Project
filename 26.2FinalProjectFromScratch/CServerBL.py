@@ -113,12 +113,13 @@ class Server:
         for key in self.connected:
             old_value = self.connected[key]
             self.connected[key] = (old_value[0], GUESS_ROLE)
-        if self.guessed == "":
+        # if noone has guessed yet or the person who is supposed to be the artist has left
+        if self.guessed == "" or self.guessed not in self.connected:
             artist = random.choice(eligible_keys)
             write_to_log(f'[ServerBL] - assign roles- the first artist is {artist}')
         else:
             artist = self.guessed
-            write_to_log(f'[ServerBL] - assign roles- the artist is: {artist}, because they guessed: {self.guessed}')
+            write_to_log(f'[ServerBL] - assign roles- the artist is: {artist}, because they guessed the previous word')
         old_value = self.connected[artist]
         self.connected[artist] = (old_value[0], DRAW_ROLE)
         return artist
