@@ -63,10 +63,10 @@ class CClientBL:
             try:
                 write_to_log(f'[ClientBL] - send message - before sending message: {action}')
                 # self._client_socket.sendall(msg.encode())
-                encrypted = self.crypto.encrypt(msg.encode())
+                encrypted = self.crypto.encrypt(msg.encode('utf-8'))
                 self._client_socket.sendall(encrypted)
 
-                write_to_log(f'[ClientBL] - send message - message sent: {action}')
+                write_to_log(f'[ClientBL] - send message - message sent: {action}{data}')
                 # with self.lock:  # Acquire the lock
                     # self._client_socket.sendall(msg.encode())
                     # write_to_log(f'[ClientBL] - message sent: {action}')

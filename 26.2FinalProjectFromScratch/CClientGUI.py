@@ -21,7 +21,7 @@ class CClientGUI(CClientBL, object):
         self._client_socket = None
         self.receive_update_thread = None
         self.gui_updates = None
-        self.CurDict = DEFAULT_DICT
+        self.CurDict = DICT_DEF
 
         self.view_wnd = None
         self.drawing_wnd = None
@@ -152,7 +152,7 @@ class CClientGUI(CClientBL, object):
 
         # create a dropdown menu for the dictionaries
         self.DictDrop = QComboBox()
-        self.DictDrop.addItems(DICTIONARIES.keys())  # Add your dictionary options here
+        self.DictDrop.addItems(list(DICTIONARIES.keys()))  # Add your dictionary options here
 
         # Add buttons to layout
         self.verticalLayout.addWidget(self.LoginBtn)
@@ -302,6 +302,7 @@ class CClientGUI(CClientBL, object):
 
     def on_select_dict(self, index):
         self.CurDict = self.DictDrop.currentText()
+        write_to_log(repr(self.CurDict))
 
     def on_click_draw(self):
         self.drawing_wnd = CDrawingGUI(self)
