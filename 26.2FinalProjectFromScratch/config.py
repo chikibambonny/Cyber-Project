@@ -43,8 +43,23 @@ GUESS_ROLE = False
 ANON_NAME = "Anonymous"
 
 # =========== WORDS ===========
-# DICTIONARIES = {}
-WORDS_BANK = "Dictionaries/English.txt"
+DEFAULT_DICT = "Dictionaries/English.txt"
+
+DICT_DEF = "DEFAULT"
+DICT_ENGLISH = "ENGLISH"
+DICT_RUSSIAN = "RUSSIAN"
+DICT_HEBREW = "HEBREW"
+DICT_HAMSONGS = "HAMILTONSONGS"
+
+DICTIONARIES = {
+    DICT_DEF: DEFAULT_DICT,
+    DICT_ENGLISH: "Dictionaries/English.txt",
+    DICT_RUSSIAN: "Dictionaries/Russian.txt",
+    DICT_HEBREW: "Dictionaries/Hebrew.txt",
+    DICT_HAMSONGS: "Dictionaries/HamiltonSongs.txt"
+
+}
+
 
 # =========== DATABASE ===========
 DATABASE_PATH = "users.db"

@@ -94,7 +94,7 @@ class CClientBL:
             try:
                 # data = self._client_socket.recv(16384).decode()
                 encrypted = self._client_socket.recv(BUFFER_SIZE)
-                data = self.crypto.decrypt(encrypted).decode()
+                data = self.crypto.decrypt(encrypted).decode('utf-8')
 
                 if not data:
                     break

@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
 from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QComboBox
 
 from CClientBL import *
 from CDrawingGUI import CDrawingGUI
@@ -20,6 +21,7 @@ class CClientGUI(CClientBL, object):
         self._client_socket = None
         self.receive_update_thread = None
         self.gui_updates = None
+        self.CurDict = DEFAULT_DICT
 
         self.view_wnd = None
         self.drawing_wnd = None
@@ -36,6 +38,7 @@ class CClientGUI(CClientBL, object):
         self.SendBtn = None
         self.LoginBtn = None
         self.PlayBtn = None
+        self.combo = None
         self.DrawBtn = None
         self.WatchBtn = None
         self.RulesBtn = None
@@ -147,9 +150,14 @@ class CClientGUI(CClientBL, object):
         self.RulesBtn = QtWidgets.QPushButton(" Rules ", self.verticalLayoutWidget)
         self.LeaveBtn = QtWidgets.QPushButton(" Leave ", self.verticalLayoutWidget)
 
+        # create a dropdown menu for the dictionaries
+        self.DictDrop = QComboBox()
+        self.DictDrop.addItems(DICTIONARIES.keys())  # Add your dictionary options here
+
         # Add buttons to layout
         self.verticalLayout.addWidget(self.LoginBtn)
         self.verticalLayout.addWidget(self.PlayBtn)
+        self.verticalLayout.addWidget(self.DictDrop)
 
         # Create horizontal layout for "Draw" and "Watch" buttons
         self.horizontalLayout = QtWidgets.QHBoxLayout()
@@ -203,6 +211,7 @@ class CClientGUI(CClientBL, object):
         self.ConnectBtn.clicked.connect(self.on_click_connect)
         self.LoginBtn.clicked.connect(self.on_click_login)
         self.PlayBtn.clicked.connect(self.on_click_play)
+        self.DictDrop.currentIndexChanged.connect(self.on_select_dict)
         self.DrawBtn.clicked.connect(self.on_click_draw)
         self.WatchBtn.clicked.connect(self.on_click_watch)
         self.RulesBtn.clicked.connect(self.on_click_rules)
@@ -289,7 +298,10 @@ class CClientGUI(CClientBL, object):
 
     def on_click_play(self):
         write_to_log(f'[ClientGUI] - play button clicked')
-        self.send_message(PLAY_ACTION, 'play')  # it doesnt cae about play data anyways, but exit command gets triggered by empty data
+        self.send_message(PLAY_ACTION, self.CurDict)
+
+    def on_select_dict(self, index):
+        self.CurDict = self.DictDrop.currentText()
 
     def on_click_draw(self):
         self.drawing_wnd = CDrawingGUI(self)

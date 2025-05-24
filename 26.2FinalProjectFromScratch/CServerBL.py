@@ -48,6 +48,7 @@ class Server:
         self.sock = None
         self.current_word: str = ""
         self.guessed: str = ""  # login of the one who guessed
+        self.dictionary = DEFAULT_DICT
 
     # receive incoming messages from the client
     def clientin(self, client):
@@ -101,7 +102,7 @@ class Server:
         write_to_log(f'[ServerBL] - broadcast - broadcasted : {msg}')
 
     def get_random_word(self):
-        with open(WORDS_BANK, "r") as file:
+        with open(self.dictionary, "r", encoding='utf-8') as file:
             words = file.read().splitlines()
         return random.choice(words)
 
@@ -215,6 +216,8 @@ class Server:
 
             elif msg.action == PLAY_ACTION:
                 write_to_log(f'[ServerBL] - play action - play received')
+                self.dictionary = DICTIONARIES[msg.data[0]]
+                self.broadcast(self.connected['root'][0], f"New game! The theme is: {msg.data[0]}")
                 self.send_roles()
 
             elif msg.action == TEXT_ACTION:
@@ -245,6 +248,10 @@ class Server:
                     #if client != msg.sender:
                     client.qout.put(Message(IMAGE_ACTION, self.connected['root'], msg.data))
                     write_to_log('[ServerBL] - msg action - image broadcasted  ')
+
+            elif msg.action == DICT_ACTION:
+                write_to_log('[ServerBL] - msg action - DICTIONARY')
+                self.dictionary = DICTIONARIES[msg.data[0]]
 
             elif msg.action == EXIT_ACTION:
                 client = msg.sender
