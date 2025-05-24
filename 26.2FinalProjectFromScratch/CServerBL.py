@@ -223,9 +223,8 @@ class Server:
                 self.broadcast(client, msg.data[0])
                 write_to_log(f'[ServerBL] - text action - BROADCASTED client: {client.login}, data: {msg.data[0]}')
                 if self.current_word:
-                    write_to_log(f'[ServerBL] - text action - current word exists')
-                    print(f"[DEBUG] msg.data: {repr(msg.data)}, curr word: {repr(self.current_word)}")
-                    if msg.data[0] == self.current_word:
+                    # print(f"[DEBUG] msg.data: {repr(msg.data[0].lower())}, curr word: {repr(self.current_word.lower())}")
+                    if msg.data[0].lower() == self.current_word.lower():
                         if client.login == self.guessed:
                             client.qout.put(
                                 Message(TEXT_ACTION, self.connected['root'][0], "Please keep the word a secret"))
