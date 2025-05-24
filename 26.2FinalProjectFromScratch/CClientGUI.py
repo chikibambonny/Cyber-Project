@@ -7,7 +7,7 @@ from CClientBL import *
 from CDrawingGUI import CDrawingGUI
 from CViewGUI import CViewGUI
 from CLoginGUI import CLoginGUI
-from protocol import *
+from Protocol import *
 from config import *
 from queue import SimpleQueue
 

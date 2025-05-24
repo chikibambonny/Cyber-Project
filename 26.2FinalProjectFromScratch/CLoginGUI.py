@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QLineEdit,QPushButton, QVBoxLayout, QHBoxLayout
 import sys
-from protocol import *
+from Protocol import *
 from config import *
 from CClientBL import *
 import CClientBL

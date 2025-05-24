@@ -3,7 +3,7 @@ import socket
 from queue import SimpleQueue
 from threading import Thread, current_thread
 from config import *
-from protocol import *
+from Protocol import *
 
 
 # Message object to encapsulate action and data

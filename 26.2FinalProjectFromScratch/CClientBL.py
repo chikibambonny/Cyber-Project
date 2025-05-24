@@ -1,7 +1,7 @@
 import socket
 from threading import Thread, Lock
 from config import *
-from protocol import *
+from Protocol import *
 
 
 class CClientBL:

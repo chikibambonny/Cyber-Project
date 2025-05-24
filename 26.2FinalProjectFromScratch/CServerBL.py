@@ -3,7 +3,8 @@ import socket
 from queue import SimpleQueue
 from threading import Thread
 from config import *
-from protocol import *
+from Protocol import *
+from DBProtocol import *
 import random
 
 
@@ -172,6 +173,9 @@ class Server:
                 username = msg.data[0]
                 password = msg.data[1]
                 write_to_log(f'[Server] - login action - login: {username}  pass: {password}')
+                # create the db if it doesn't exist yet
+                if not os.path.isfile(DATABASE_PATH):
+                    init_user_db()
                 success, message = authenticate_user(username, password)
                 if success:
                     write_to_log(f'[Server] - login - success')
@@ -193,6 +197,9 @@ class Server:
                 username = msg.data[0]
                 password = msg.data[1]
                 write_to_log(f'[Server] - signup action - login: {username}  pass: {password}')
+                # create the db if it doesn't exist yet
+                if not os.path.isfile(DATABASE_PATH):
+                    init_user_db()
                 success, message = register_user(username, password)
                 write_to_log(f'[Server] - signup - success: {success}, message: {message}')
                 if success:
