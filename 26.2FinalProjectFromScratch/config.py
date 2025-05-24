@@ -45,11 +45,11 @@ ANON_NAME = "Anonymous"
 # =========== WORDS ===========
 DEFAULT_DICT = "Dictionaries/English.txt"
 
-DICT_DEF = "DEFAULT"
-DICT_ENGLISH = "ENGLISH"
-DICT_RUSSIAN = "RUSSIAN"
-DICT_HEBREW = "HEBREW"
-DICT_HAMSONGS = "HAMILTONSONGS"
+DICT_DEF = "Default"
+DICT_ENGLISH = "English"
+DICT_RUSSIAN = "Russian"
+DICT_HEBREW = "Hebrew"
+DICT_HAMSONGS = "Hamilton"
 
 DICTIONARIES = {
     DICT_DEF: DEFAULT_DICT,
@@ -107,7 +107,7 @@ WHITE = "rgb(255, 244, 226)"
 PALETTE_COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK, BLACK]
 
 
-def set_designs(buttons: list, fields: list, labels: list):
+def set_designs(buttons: list, fields: list, labels: list, dropdowns: list):
     button_style = f"""
     QPushButton:enabled {{ 
         background-color: {BUTTONS};  
@@ -124,11 +124,25 @@ def set_designs(buttons: list, fields: list, labels: list):
         border-radius: 8px;
     }}
 """
+    dropdown_style = f"""
+    QComboBox {{
+        background-color: {BUTTONS};
+        color: {TEXT_BUTTONS};
+        border: 2px solid {BORDER_BUTTONS};
+        border-bottom: 4px solid {SHADOW_BUTTONS};
+        border-radius: 8px;
+        qproperty-alignment: 'AlignCenter';
+        
+    }}
+"""
+
     field_style = f"background-color: {FIELDS}; color: {TEXT_COL}"
     label_style = f"color: {LABELS}"
 
     for button in buttons:
         button.setStyleSheet(button_style)
+    for dropdown in dropdowns:
+        dropdown.setStyleSheet(dropdown_style)
     for field in fields:
         field.setStyleSheet(field_style)
     for label in labels:

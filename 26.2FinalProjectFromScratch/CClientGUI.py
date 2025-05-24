@@ -153,6 +153,7 @@ class CClientGUI(CClientBL, object):
         # create a dropdown menu for the dictionaries
         self.DictDrop = QComboBox()
         self.DictDrop.addItems(list(DICTIONARIES.keys()))  # Add your dictionary options here
+        self.DictDrop.setFixedHeight(20)
 
         # Add buttons to layout
         self.verticalLayout.addWidget(self.LoginBtn)
@@ -181,6 +182,7 @@ class CClientGUI(CClientBL, object):
             self.ConnectBtn, self.LoginBtn, self.PlayBtn, self.DrawBtn,
             self.WatchBtn, self.RulesBtn, self.LeaveBtn, self.SendBtn
         ]
+        dropdowns = [self.DictDrop]
         # List of all input fields
         input_fields = [
             self.IPField, self.PortField, self.SendField, self.ReceiveField
@@ -189,7 +191,7 @@ class CClientGUI(CClientBL, object):
         labels = [
             self.IPLabel, self.PortLabel, self.ReceiveLabel, self.Sendlabel
         ]
-        set_designs(buttons, input_fields, labels)
+        set_designs(buttons, input_fields, labels, dropdowns)
 
 
         # SET UP DEFAULT STATES
