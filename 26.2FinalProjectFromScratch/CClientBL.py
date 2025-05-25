@@ -63,7 +63,7 @@ class CClientBL:
             try:
                 write_to_log(f'[ClientBL] - send message - before sending message: {action}')
                 # self._client_socket.sendall(msg.encode())
-                encrypted = self.crypto.encrypt(msg.encode('utf-8'))
+                encrypted = self.crypto.encrypt(msg.encode(FORMAT))
                 self._client_socket.sendall(encrypted)
 
                 write_to_log(f'[ClientBL] - send message - message sent: {action}{data}')
@@ -94,7 +94,8 @@ class CClientBL:
             try:
                 # data = self._client_socket.recv(16384).decode()
                 encrypted = self._client_socket.recv(BUFFER_SIZE)
-                data = self.crypto.decrypt(encrypted).decode('utf-8')
+                data = self.crypto.decrypt(encrypted)
+                data = data.decode(FORMAT)
 
                 if not data:
                     break

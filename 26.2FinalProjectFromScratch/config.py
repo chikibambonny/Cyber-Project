@@ -1,8 +1,9 @@
 # =========== NETWORK ===========
 
 SERVER_HOST: str = "127.0.0.1"
-PORT: int = 1113
-BUFFER_SIZE: int = 16384
+PORT: int = 1112
+BUFFER_SIZE: int = 10240
+CHUNK_SIZE: int = 10240
 HEADER: str = "04d"
 FORMAT: str = 'utf-8'
 DISCONNECT_MSG: str = "EXIT"
@@ -23,6 +24,7 @@ SIGNUP_ACTION = "SIGNUP"
 TEXT_ACTION = "TEXT"  # REGULAR TEXT MESSAGE TO BE BROADCASTED
 LOGOUT_ACTION = "LOGOUT"
 IMAGE_ACTION = "IMAGE"
+IMAGE_END_ACTION = "IMAGE_END"
 
 # gameplay
 DICT_ACTION = "DICTIONARY"
@@ -107,7 +109,7 @@ WHITE = "rgb(255, 244, 226)"
 PALETTE_COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK, BLACK]
 
 
-def set_designs(buttons: list, fields: list, labels: list, dropdowns: list):
+def set_designs(buttons: list =[], fields: list=[], labels: list=[], dropdowns: list=[]):
     button_style = f"""
     QPushButton:enabled {{ 
         background-color: {BUTTONS};  

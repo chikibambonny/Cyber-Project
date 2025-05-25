@@ -45,7 +45,9 @@ def create_msg(action: str, data=""):
         else:
             msg = action   # + ACT_DELIMITER + data  # empty string after the delimiter for the PLAY comand
         write_to_log(f"[Protocol] - create msg - message created: {msg}")
-        return msg+"\n"
+        msg_padded = msg.ljust(CHUNK_SIZE, " ")
+        return msg_padded
+        #return msg+"\n"
     else:
         write_to_log(f"[Protocol] - create msg - unsupported action: {action}")
 
@@ -53,6 +55,7 @@ def create_msg(action: str, data=""):
 def parse_msg(msg: str):
     # split msg to action and data
     msg = msg.replace("\n", "")
+    msg = msg.rstrip(" ")
     split_msg = msg.split(ACT_DELIMITER)
     # get the action
     action = split_msg[0]

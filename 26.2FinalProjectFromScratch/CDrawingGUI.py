@@ -129,7 +129,10 @@ class CDrawingGUI(QtWidgets.QWidget):
 
         self.image_send_timer = None
 
+        print("[DEBUG] Starting setupUi")
         self.setupUi(self)
+        print("[DEBUG] Finished setupUi")
+
         # self.setup_autosave()
         self.setup_autosend()
 
@@ -165,17 +168,25 @@ class CDrawingGUI(QtWidgets.QWidget):
         image.save(buffer, "JPEG", quality=70)  # Lower quality (0–100) = smaller file size
         write_to_log(f'[DrawingGUI] - send drawing - imaged loaded into the buffer')
 
-        # Step 4: Extract the raw bytes from the buffer
-        img_bytes = buffer.data()
+        lb = base64.b64encode(buffer.data()).decode("utf-8")
+        while lb:
+            availible_leng = CHUNK_SIZE - len(IMAGE_ACTION) - 1
+            cur_chunk = lb[:availible_leng]
+            lb = lb[availible_leng:]
+            self.cgui.send_message(IMAGE_ACTION, cur_chunk)
+        self.cgui.send_message(IMAGE_END_ACTION)
 
-        # Step 5: Encode the image bytes to a base64 string (safe for sending as text)
-        img_b64 = base64.b64encode(img_bytes).decode('utf-8')
-        write_to_log(f'[DrawingGUI] - send drawing - converted to base64 string')
-
-        # Step 6: Send the image data to the server using your existing message protocol
-        self.cgui.send_message(IMAGE_ACTION, img_b64)
-        write_to_log(f'[DrawingGUI] - send drawing - sent')
-
+        '''
+        buffer.seek(0)
+        chunk_index = 0
+        while not buffer.atEnd():
+            chunk = buffer.read(CHUNK_SIZE)
+            encoded_chunk = base64.b64encode(chunk).decode("utf-8")
+            self.cgui.send_message(IMAGE_ACTION, encoded_chunk)
+            # self.cgui.send_message(IMAGE_ACTION, (str(chunk_index), encoded_chunk))
+            # chunk_index += 1
+        self.cgui.send_message(IMAGE_END_ACTION)
+        '''
     def shutdown(self):
         try:
             self.image_send_timer.stop()

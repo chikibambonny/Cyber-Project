@@ -22,6 +22,7 @@ class CClientGUI(CClientBL, object):
         self.receive_update_thread = None
         self.gui_updates = None
         self.CurDict = DICT_DEF
+        self.cur_disp_img = ""  # base for adding received image chunks to it
 
         self.view_wnd = None
         self.drawing_wnd = None
@@ -198,7 +199,7 @@ class CClientGUI(CClientBL, object):
         self.ConnectBtn.setEnabled(True)
         self.LoginBtn.setEnabled(False)
         self.PlayBtn.setEnabled(False)
-        self.DrawBtn.setEnabled(False)
+        self.DrawBtn.setEnabled(True)
         self.WatchBtn.setEnabled(False)
         self.LeaveBtn.setEnabled(False)
         self.SendBtn.setEnabled(True)
@@ -250,9 +251,12 @@ class CClientGUI(CClientBL, object):
             elif action == WORD_ACTON:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, f'Your word to draw is: {parsed_text}'), {}))
             elif action == IMAGE_ACTION:
-                write_to_log(f'[ClientGUI] - update target - image action')
-                self.gui_updates.put((self.ensure_view_window_and_show_image, (parsed_text,), {}))
+                self.cur_disp_img += parsed_text
+            elif action == IMAGE_END_ACTION:
+                write_to_log(f'[ClientGUI] - update target - image end action')
+                self.gui_updates.put((self.ensure_view_window_and_show_image, (self.cur_disp_img,), {}))
                 write_to_log('[ClientGUI] - update target - image put into gui queue')
+                self.cur_disp_img = ""
             else:
                 self.gui_updates.put((self.append_field, (self.ReceiveField, text), {}))
 

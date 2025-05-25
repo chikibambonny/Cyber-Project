@@ -49,6 +49,7 @@ class Server:
         self.current_word: str = ""
         self.guessed: str = ""  # login of the one who guessed
         self.dictionary = DEFAULT_DICT
+        self.curr_img = []
 
     # receive incoming messages from the client
     def clientin(self, client):
@@ -101,8 +102,14 @@ class Server:
         client.qout.put(Message(TEXT_ACTION, self.connected['root'][0], spec_msg))
         write_to_log(f'[ServerBL] - broadcast - broadcasted : {msg}')
 
+    def broadcast_img(self, images: []):
+        for client, _ in self.connected.values():
+            for i in images:
+                client.qout.put(Message(IMAGE_ACTION, self.connected['root'], i))
+            client.qout.put(Message(IMAGE_END_ACTION, self.connected['root']))
+
     def get_random_word(self):
-        with open(self.dictionary, "r", encoding='utf-8') as file:
+        with open(self.dictionary, "r", encoding=FORMAT) as file:
             words = file.read().splitlines()
         return random.choice(words)
 
@@ -244,10 +251,11 @@ class Server:
 
             elif msg.action == IMAGE_ACTION:
                 write_to_log('[ServerBL] - msg action - IMAGE')
-                for client, _ in self.connected.values():
-                    #if client != msg.sender:
-                    client.qout.put(Message(IMAGE_ACTION, self.connected['root'], msg.data))
-                    write_to_log('[ServerBL] - msg action - image broadcasted  ')
+                self.curr_img.append(msg.data[0])
+
+            elif msg.action == IMAGE_END_ACTION:
+                self.broadcast_img(self.curr_img)
+                self.curr_img = []
 
             elif msg.action == DICT_ACTION:
                 write_to_log('[ServerBL] - msg action - DICTIONARY')
