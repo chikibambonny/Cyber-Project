@@ -1,7 +1,7 @@
 # =========== NETWORK ===========
 
 SERVER_HOST: str = "127.0.0.1"
-PORT: int = 1113
+PORT: int = 1112
 BUFFER_SIZE: int = 16384
 HEADER: str = "04d"
 FORMAT: str = 'utf-8'
@@ -107,7 +107,7 @@ WHITE = "rgb(255, 244, 226)"
 PALETTE_COLORS = [RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK, BLACK]
 
 
-def set_designs(buttons: list, fields: list, labels: list, dropdowns: list):
+def set_designs(buttons: list=[], fields: list=[], labels: list=[], dropdowns: list=[]):
     button_style = f"""
     QPushButton:enabled {{ 
         background-color: {BUTTONS};  

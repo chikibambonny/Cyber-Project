@@ -162,7 +162,7 @@ class CDrawingGUI(QtWidgets.QWidget):
         write_to_log(f'[DrawingGUI] - send drawing - buffer opened')
 
         # Step 3: Save the image into the buffer using JPEG format (smaller than PNG)
-        image.save(buffer, "JPEG", quality=70)  # Lower quality (0–100) = smaller file size
+        image.save(buffer, "JPEG", quality=60)  # Lower quality (0–100) = smaller file size
         write_to_log(f'[DrawingGUI] - send drawing - imaged loaded into the buffer')
 
         # Step 4: Extract the raw bytes from the buffer
